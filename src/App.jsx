@@ -3,6 +3,7 @@ import { Button } from "./components/ui/button";
 import { Progress } from "./components/ui/progress";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./components/ui/card";
 import { Bell, Volume2, VolumeX } from "lucide-react";
+import sdk from '@farcaster/frame-sdk';
 
 function App() {
   // Exercise data
@@ -54,6 +55,9 @@ function App() {
   const vibrationEnabled = true;
   // Wake Lock state
   const [wakeLock, setWakeLock] = useState(null);
+  // Farcaster Frame context
+  const [isFrameSDKLoaded, setIsFrameSDKLoaded] = useState(false);
+  const [frameContext, setFrameContext] = useState(null);
 
   // Format time (seconds) to MM:SS
   const formatTime = (seconds) => {
@@ -205,6 +209,24 @@ function App() {
     };
   }, [workoutInProgress, wakeLock]);
 
+  // Load Farcaster Frame SDK
+  useEffect(() => {
+    const loadFrameSDK = async () => {
+      try {
+        setFrameContext(await sdk.context);
+        sdk.actions.ready();
+        setIsFrameSDKLoaded(true);
+        console.log('Frame SDK loaded:', frameContext);
+      } catch (err) {
+        console.error('Error loading Frame SDK:', err);
+      }
+    };
+    
+    if (!isFrameSDKLoaded && 'context' in sdk) {
+      loadFrameSDK();
+    }
+  }, [isFrameSDKLoaded, frameContext]);
+
   // Start workout
   const startWorkout = () => {
     console.log('Starting workout');
@@ -274,6 +296,11 @@ function App() {
         <header className="border-b border-border p-4 text-center">
           <h1 className="text-2xl font-bold md:text-3xl">Bicep Blaster</h1>
           <p className="text-sm text-muted-foreground">Complete all exercises in one flow</p>
+          {frameContext && frameContext.fid && (
+            <div className="mt-2 text-xs text-primary">
+              Connected via Farcaster • FID: {frameContext.fid}
+            </div>
+          )}
         </header>
 
         {/* Main workout display */}
@@ -310,9 +337,32 @@ function App() {
             </CardContent>
             <CardFooter className="justify-center gap-3">
               {isWorkoutComplete ? (
-                <Button size="lg" onClick={resetWorkout}>
-                  Start Again
-                </Button>
+                <>
+                  <Button size="lg" onClick={resetWorkout}>
+                    Start Again
+                  </Button>
+                  {frameContext && frameContext.fid && (
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      onClick={() => {
+                        try {
+                          // Post to Farcaster about completed workout
+                          sdk.actions.execute({
+                            type: 'share',
+                            title: 'Workout Complete!',
+                            text: `Just completed the Bicep Blaster workout with ${exercises.length} exercises! 💪`,
+                            url: window.location.href
+                          });
+                        } catch (err) {
+                          console.error('Error sharing to Farcaster:', err);
+                        }
+                      }}
+                    >
+                      Share 🔄
+                    </Button>
+                  )}
+                </>
               ) : !isRunning ? (
                 <>
                   <Button size="lg" onClick={startWorkout}>
@@ -400,6 +450,13 @@ function App() {
               Contact Us 📱
             </a>
           </div>
+          
+          {/* Farcaster attribution if in Frame */}
+          {frameContext && frameContext.fid && (
+            <div className="mt-4 text-center text-xs text-muted-foreground">
+              <p>Viewed via Farcaster Frame</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,0 +1,17 @@
+{
+    "accountAssociation": {
+    "header": "eyJmaWQiOjE3OTQwLCJ0eXBlIjoiY3VzdG9keSIsImtleSI6IjB4ZTkwNDcxNWIzZjYzQjRmYkJiQ0FlMGZiODk5NmYyNTBENzlENDcwYSJ9",
+    "payload": "eyJkb21haW4iOiJiaWNlcGJsYXN0ZXIub3JiaXRlci53ZWJzaXRlIn0",
+    "signature": "MHg3OGFhY2RhMmRmZTIzNDhjYWY4ZDgzYTE0MDJlMjFkNjA4N2MxOGE2NjNmYWQ2OTI5NjBhYjJlOTJkZjY1ODU2MGFkZThmZTZlMjdmNWU4NDliNGJhYjY1MWQ3YWNmYjNiYThhZmRmODE2Y2M3M2Q5ODU0MzA1OGRlZGEwYWJmYTFi"
+    },
+    "frame": {
+    "version": "1",
+    "name": "Bicep Blaster",
+    "iconUrl": "https://bicepblaster.orbiter.website/logo192.png",
+    "homeUrl": "https://bicepblaster.orbiter.website",
+    "imageUrl": "https://bicepblaster.orbiter.website/logo512.png",
+    "buttonTitle": "Start Workout",
+    "splashImageUrl": "https://bicepblaster.orbiter.website/logo512.png",
+    "splashBackgroundColor": "#000000"
+    }
+}
