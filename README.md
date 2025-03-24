@@ -2,7 +2,7 @@
 
 A lightweight, browser-based workout timer application specifically designed for bicep training. This application helps users follow a structured bicep workout routine with timed exercises and visual cues.
 
-![2025-03-24 09 24 47 0 0 0 0 e4c79c6538d6](https://github.com/user-attachments/assets/23752fb9-2a2b-4bda-8b0a-045f91c051d7)
+[![2025-03-24 09 24 47 0 0 0 0 e4c79c6538d6](https://github.com/user-attachments/assets/23752fb9-2a2b-4bda-8b0a-045f91c051d7)](https://bicepblaster.orbiter.website/)
 
 ## Features
 
