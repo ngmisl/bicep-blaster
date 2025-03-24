@@ -1,5 +1,8 @@
-import { useState, useEffect } from 'react'
-import './App.css'
+import { useState, useEffect } from "react";
+import { Button } from "./components/ui/button";
+import { Progress } from "./components/ui/progress";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./components/ui/card";
+import { Bell, Volume2, VolumeX, Vibrate, ZapOff } from "lucide-react";
 
 function App() {
   // Exercise data
@@ -46,6 +49,7 @@ function App() {
   const [secondsRemaining, setSecondsRemaining] = useState(exercises[0].duration);
   const [isRunning, setIsRunning] = useState(false);
   const [workoutInProgress, setWorkoutInProgress] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
   
   // Format time (seconds) to MM:SS
@@ -57,13 +61,13 @@ function App() {
 
   // Calculate progress percentage
   const calculateProgress = () => {
-    const totalSeconds = exercises[currentExerciseIndex].duration;
+    const totalSeconds = exercises[currentExerciseIndex]?.duration || 1;
     return ((totalSeconds - secondsRemaining) / totalSeconds) * 100;
   };
 
   // Play sound - only when called directly
   const playSound = () => {
-    if (!workoutInProgress) return; // Safety check
+    if (!workoutInProgress || !soundEnabled) return; // Safety check
     
     try {
       const sound = new Audio('/sound.mp3');
@@ -174,6 +178,11 @@ function App() {
     moveToNextExercise();
   };
 
+  // Toggle sound
+  const toggleSound = () => {
+    setSoundEnabled(prev => !prev);
+  };
+
   // Toggle vibration
   const toggleVibration = () => {
     setVibrationEnabled(prev => !prev);
@@ -196,119 +205,160 @@ function App() {
     return null;
   };
 
+  const currentExercise = currentExerciseIndex < exercises.length ? exercises[currentExerciseIndex] : null;
+  const nextExercise = currentExerciseIndex < exercises.length - 1 ? exercises[currentExerciseIndex + 1] : null;
+  const isWorkoutComplete = currentExerciseIndex >= exercises.length;
+
   return (
-    <div className="container">
-      <header>
-        <h1>Bicep Blaster Workout</h1>
-        <p>Complete all exercises in one continuous flow</p>
-      </header>
+    <div className="dark flex min-h-screen w-full items-center justify-center bg-background px-4 py-6 text-foreground">
+      <div className="w-full max-w-md rounded-lg border border-border shadow-lg">
+        <header className="border-b border-border p-4 text-center">
+          <h1 className="text-2xl font-bold md:text-3xl">Bicep Blaster</h1>
+          <p className="text-sm text-muted-foreground">Complete all exercises in one flow</p>
+        </header>
 
-      <div className="workout-container">
-        <div className="timer-display" id="timer">
-          {currentExerciseIndex >= exercises.length 
-            ? "DONE!" 
-            : formatTime(secondsRemaining)}
-        </div>
+        {/* Main workout display */}
+        <div className="p-4">
+          {/* Current Exercise Display */}
+          <Card className="mb-6 relative overflow-hidden">
+            <Progress 
+              value={isWorkoutComplete ? 100 : calculateProgress()} 
+              className="absolute top-0 h-1 w-full" 
+            />
+            <CardHeader className="pb-2">
+              <CardTitle className="exercise-name-large">
+                {isWorkoutComplete 
+                  ? "Workout Complete" 
+                  : currentExercise?.name}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 text-center">
+              <div className="workout-timer-display">
+                {isWorkoutComplete 
+                  ? "DONE!" 
+                  : formatTime(secondsRemaining)}
+              </div>
+              <p className="mt-4 text-sm md:text-base">
+                {isWorkoutComplete 
+                  ? "Great job! You've completed all exercises." 
+                  : currentExercise?.instruction}
+              </p>
+              {nextExercise && (
+                <div className="mt-3 text-sm text-muted-foreground">
+                  Next: {nextExercise.name}
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="justify-center gap-3">
+              {isWorkoutComplete ? (
+                <Button size="lg" onClick={resetWorkout}>
+                  Start Again
+                </Button>
+              ) : !isRunning ? (
+                <>
+                  <Button size="lg" onClick={startWorkout}>
+                    {!workoutInProgress ? "Start" : "Resume"}
+                  </Button>
+                  <Button size="lg" onClick={resetWorkout} variant="outline">
+                    Reset
+                  </Button>
+                  {workoutInProgress && (
+                    <Button size="lg" onClick={skipToNext} variant="outline" 
+                      disabled={currentExerciseIndex >= exercises.length - 1}>
+                      Skip
+                    </Button>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    onClick={toggleSound}
+                    className="h-10 px-3"
+                  >
+                    {soundEnabled ? "🔊" : "🔇"}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={toggleVibration}
+                    className="h-10 px-3"
+                  >
+                    {vibrationEnabled ? "📳" : "📴"}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button size="lg" onClick={pauseWorkout} variant="outline">
+                    Pause
+                  </Button>
+                  <Button size="lg" onClick={resetWorkout} variant="outline">
+                    Reset
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={toggleSound}
+                    className="h-10 px-3"
+                  >
+                    {soundEnabled ? "🔊" : "🔇"}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={toggleVibration}
+                    className="h-10 px-3"
+                  >
+                    {vibrationEnabled ? "📳" : "📴"}
+                  </Button>
+                </>
+              )}
+            </CardFooter>
+          </Card>
 
-        <div className="exercise-info">
-          <div className="exercise-name">
-            {currentExerciseIndex < exercises.length 
-              ? exercises[currentExerciseIndex].name 
-              : "Workout Complete"}
-          </div>
-
-          <div className="exercise-description">
-            {currentExerciseIndex < exercises.length 
-              ? exercises[currentExerciseIndex].instruction 
-              : "Great job! You've completed all exercises."}
-          </div>
-        </div>
-
-        <div className="progress-container">
-          <div className="progress-bar">
-            <div 
-              className="progress-fill" 
-              style={{ width: `${currentExerciseIndex < exercises.length ? calculateProgress() : 100}%` }}
-            ></div>
-          </div>
-        </div>
-
-        {getNextExerciseName() && (
-          <div className="next-up">
-            <div className="next-label">Next Exercise:</div>
-            <div className="next-exercise">{getNextExerciseName()}</div>
-          </div>
-        )}
-
-        <div className="controls">
-          <button 
-            className="start-btn" 
-            onClick={startWorkout}
-            disabled={isRunning}
-          >
-            {!workoutInProgress 
-              ? "Start Workout" 
-              : isRunning 
-                ? "In Progress" 
-                : "Resume"}
-          </button>
-          <button 
-            className="pause-btn" 
-            onClick={pauseWorkout}
-            disabled={!isRunning}
-          >
-            Pause
-          </button>
-          <button 
-            className="reset-btn" 
-            onClick={resetWorkout}
-          >
-            Reset
-          </button>
-          {currentExerciseIndex < exercises.length - 1 && workoutInProgress && !isRunning && (
-            <button 
-              className="skip-btn" 
-              onClick={skipToNext}
-            >
-              Skip
-            </button>
-          )}
-        </div>
-        
-        <div className="settings">
-          <button 
-            className={`vibration-btn ${vibrationEnabled ? 'active' : 'inactive'}`}
-            onClick={toggleVibration}
-          >
-            {vibrationEnabled ? 'Vibration: ON' : 'Vibration: OFF'}
-          </button>
-        </div>
-      </div>
-
-      <div className="workout-list">
-        <h2>Exercise List</h2>
-        {exercises.map((exercise, index) => (
-          <div 
-            key={exercise.id} 
-            className={`exercise-item ${index === currentExerciseIndex ? 'current' : ''} ${index < currentExerciseIndex ? 'completed' : ''}`}
-            onClick={() => handleExerciseItemClick(index)}
-          >
-            <div className="exercise-item-header">
-              <span className="exercise-name">{exercise.name}</span>
-              <span className="exercise-time">{formatTime(exercise.duration)}</span>
+          {/* Exercise List */}
+          <div className="mb-6">
+            <h2 className="font-bold text-lg mb-2">Exercise List</h2>
+            <div className="space-y-3">
+              {exercises.map((exercise, index) => (
+                <Card 
+                  key={exercise.id}
+                  className={`cursor-pointer ${
+                    index === currentExerciseIndex 
+                      ? "border-primary" 
+                      : index < currentExerciseIndex 
+                        ? "opacity-50" 
+                        : ""
+                  }`}
+                  onClick={() => handleExerciseItemClick(index)}
+                >
+                  <CardContent className="p-3">
+                    <div className="font-bold">{exercise.name}</div>
+                    <div className="text-xs truncate">{exercise.instruction.substring(0, 60)}...</div>
+                    <div className="text-xs mt-1">{formatTime(exercise.duration)}</div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-            <p className="exercise-instruction">{exercise.instruction}</p>
           </div>
-        ))}
+          
+          {/* Support Link - More Visible */}
+          <div className="mt-4 text-center flex justify-center gap-3">
+            <a 
+              href="https://fourzerofour.fkey.id/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="inline-block py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+            >
+              Support this project ❤️
+            </a>
+            <a 
+              href="https://simplex.chat/contact/#/?v=2-7&smp=smp%3A%2F%2FZKe4uxF4Z_aLJJOEsC-Y6hSkXgQS5-oc442JQGkyP8M%3D%40smp17.simplex.im%2F1CEQbUx7PLENFjgLngWHKRb-hTNQIOKR%23%2F%3Fv%3D1-3%26dh%3DMCowBQYDK2VuAyEAO805q6Syl84pJXUTqmNiPfLPU_Dk_hqyosW56vMy7BU%253D%26srv%3Dogtwfxyi3h2h5weftjjpjmxclhb5ugufa5rcyrmg7j4xlch7qsr5nuqd.onion" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="inline-block py-2 px-4 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
+            >
+              Contact Us 📱
+            </a>
+          </div>
+        </div>
       </div>
-
-      <footer className="footer">
-        <a href="https://fourzerofour.fkey.id/" target="_blank" rel="noopener noreferrer" className="support-link">
-          Support this project ❤️
-        </a>
-      </footer>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
