@@ -1,119 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; media-src 'self' data:; script-src-elem 'self' 'unsafe-inline';">
     <title>Bicep Blaster Workout</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon" />
-    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="container">
-      <header>
-        <h1>Bicep Blaster Workout</h1>
-        <p>Complete all exercises in one continuous flow</p>
-      </header>
-
-      <div class="workout-container">
-        <div class="timer-display" id="timer">01:00</div>
-
-        <div class="exercise-info">
-          <div class="exercise-name" id="current-exercise">Wide DB Curl</div>
-
-          <div class="exercise-description" id="current-instruction">
-            Hold dumbbells with palms up and arms wider than shoulder-width,
-            then curl up while keeping elbows fixed.
-          </div>
-        </div>
-
-        <div class="progress-container">
-          <div class="progress-bar">
-            <div class="progress-fill" id="progress"></div>
-          </div>
-        </div>
-
-        <div class="next-up" id="next-up-container">
-          <div class="next-label">Next Exercise:</div>
-          <div class="next-exercise" id="next-exercise">Hammer Curl</div>
-        </div>
-
-        <div class="controls">
-          <button class="start-btn" id="start-btn">Start Workout</button>
-          <button class="pause-btn" id="pause-btn">Pause</button>
-          <button class="reset-btn" id="reset-btn">Reset</button>
-        </div>
-      </div>
-
-      <div class="workout-list">
-        <h2>Exercise List</h2>
-
-        <div class="exercise-item current" id="ex-1">
-          <div class="exercise-item-header">
-            <span class="exercise-name">Wide DB Curl</span>
-            <span class="exercise-time">1:00</span>
-          </div>
-
-          <p class="exercise-instruction">
-            Hold dumbbells with palms up and arms wider than shoulder-width,
-            then curl up while keeping elbows fixed.
-          </p>
-        </div>
-
-        <div class="exercise-item" id="ex-2">
-          <div class="exercise-item-header">
-            <span class="exercise-name">Hammer Curl</span>
-            <span class="exercise-time">1:00</span>
-          </div>
-
-          <p class="exercise-instruction">
-            Hold dumbbells with palms facing each other, then curl up while
-            maintaining the neutral grip throughout the movement.
-          </p>
-        </div>
-
-        <div class="exercise-item" id="ex-3">
-          <div class="exercise-item-header">
-            <span class="exercise-name">Drag Curl</span>
-            <span class="exercise-time">1:00</span>
-          </div>
-
-          <p class="exercise-instruction">
-            Curl the weights while keeping them close to your body, dragging
-            them upward as your elbows move backward.
-          </p>
-        </div>
-
-        <div class="exercise-item" id="ex-4">
-          <div class="exercise-item-header">
-            <span class="exercise-name">Reverse DB Curl</span>
-            <span class="exercise-time">1:00</span>
-          </div>
-
-          <p class="exercise-instruction">
-            Hold dumbbells with palms facing down, then curl up while
-            maintaining the overhand grip to target the forearms and brachialis.
-          </p>
-        </div>
-
-        <div class="exercise-item" id="ex-5">
-          <div class="exercise-item-header">
-            <span class="exercise-name">DB Straight Curl</span>
-            <span class="exercise-time">1:00</span>
-          </div>
-
-          <p class="exercise-instruction">
-            Hold dumbbells at your sides with palms facing forward, then curl
-            straight up without letting your elbows move forward.
-          </p>
-        </div>
-      </div>
-
-      <footer class="footer">
-        <a href="https://fourzerofour.fkey.id/" target="_blank" class="support-link">Support this project ❤️</a>
-      </footer>
-    </div>
-
-    <script src="script.js"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
