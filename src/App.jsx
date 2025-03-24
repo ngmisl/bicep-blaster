@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 
 function App() {
@@ -46,21 +46,11 @@ function App() {
   const [secondsRemaining, setSecondsRemaining] = useState(exercises[0].duration);
   const [isRunning, setIsRunning] = useState(false);
   const [workoutInProgress, setWorkoutInProgress] = useState(false);
+  const [vibrationEnabled, setVibrationEnabled] = useState(true);
   
-  // Refs
-  const timerRef = useRef(null);
-  const exerciseChangeSoundRef = useRef(null);
-
-  // Initialize sound
-  useEffect(() => {
-    exerciseChangeSoundRef.current = new Audio('/sound.mp3');
-  }, []);
-
   // Format time (seconds) to MM:SS
   const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60)
-      .toString()
-      .padStart(2, "0");
+    const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
     const secs = (seconds % 60).toString().padStart(2, "0");
     return `${mins}:${secs}`;
   };
@@ -71,73 +61,130 @@ function App() {
     return ((totalSeconds - secondsRemaining) / totalSeconds) * 100;
   };
 
-  // Start timer
-  const startTimer = () => {
-    if (!isRunning) {
-      setIsRunning(true);
-      if (!workoutInProgress) {
-        setWorkoutInProgress(true);
-      }
-
-      timerRef.current = setInterval(() => {
-        setSecondsRemaining(prev => {
-          if (prev <= 1) {
-            clearInterval(timerRef.current);
-            setIsRunning(false);
-            nextExercise();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-  };
-
-  // Move to next exercise
-  const nextExercise = () => {
-    const newIndex = currentExerciseIndex + 1;
+  // Play sound - only when called directly
+  const playSound = () => {
+    if (!workoutInProgress) return; // Safety check
     
-    if (newIndex < exercises.length) {
-      // Play sound to indicate exercise change
-      exerciseChangeSoundRef.current.play();
-      
-      // Update current exercise index and seconds remaining
-      setCurrentExerciseIndex(newIndex);
-      setSecondsRemaining(exercises[newIndex].duration);
-      
-      // Use setTimeout to ensure state updates have been processed
-      setTimeout(() => {
-        // Automatically start the next exercise timer
-        startTimer();
-      }, 100);
-    } else {
-      // Workout completed
-      setWorkoutInProgress(false);
-      setIsRunning(false);
+    try {
+      const sound = new Audio('/sound.mp3');
+      sound.play().catch(e => console.log('Error playing sound:', e));
+    } catch (e) {
+      console.log('Error playing sound:', e);
     }
   };
 
-  // Pause timer
-  const pauseTimer = () => {
-    clearInterval(timerRef.current);
+  // Vibrate device - only when called directly
+  const vibrate = (pattern) => {
+    if (!workoutInProgress || !vibrationEnabled) return; // Safety check
+    
+    if ('vibrate' in navigator) {
+      try {
+        navigator.vibrate(pattern);
+      } catch (e) {
+        console.log('Vibration failed:', e);
+      }
+    }
+  };
+  
+  // Move to next exercise - called only from one place
+  const moveToNextExercise = () => {
+    const nextIndex = currentExerciseIndex + 1;
+    
+    // Play sound and vibrate
+    playSound();
+    vibrate([300, 100, 300]);
+    
+    if (nextIndex < exercises.length) {
+      // Go to next exercise
+      setCurrentExerciseIndex(nextIndex);
+      setSecondsRemaining(exercises[nextIndex].duration);
+    } else {
+      // Workout complete
+      vibrate([500, 200, 500, 200, 500]);
+      setIsRunning(false);
+      setWorkoutInProgress(false);
+    }
+  };
+  
+  // SINGLE timer useEffect - the only place where time is decremented
+  useEffect(() => {
+    // Only run when the workout is active
+    if (!isRunning) return;
+    
+    console.log(`Timer running for exercise ${currentExerciseIndex + 1}: ${exercises[currentExerciseIndex].name}`);
+    
+    // Create single interval that runs every second
+    const intervalId = setInterval(() => {
+      setSecondsRemaining(seconds => {
+        // When time's up, move to next exercise
+        if (seconds <= 1) {
+          clearInterval(intervalId);
+          
+          console.log(`Exercise ${currentExerciseIndex + 1} complete`);
+          moveToNextExercise();
+          return 0;
+        }
+        
+        // Vibrate during final countdown
+        if (seconds <= 3) {
+          vibrate(200);
+        }
+        
+        // Continue countdown
+        return seconds - 1;
+      });
+    }, 1000);
+    
+    // Clean up when component unmounts or dependencies change
+    return () => {
+      console.log('Clearing timer');
+      clearInterval(intervalId);
+    };
+  }, [isRunning, currentExerciseIndex]); // Only re-run when these change
+
+  // Start workout
+  const startWorkout = () => {
+    console.log('Starting workout');
+    setIsRunning(true);
+    if (!workoutInProgress) {
+      setWorkoutInProgress(true);
+    }
+  };
+
+  // Pause workout
+  const pauseWorkout = () => {
+    console.log('Pausing workout');
     setIsRunning(false);
   };
 
   // Reset workout
   const resetWorkout = () => {
-    clearInterval(timerRef.current);
+    console.log('Resetting workout');
     setIsRunning(false);
     setWorkoutInProgress(false);
     setCurrentExerciseIndex(0);
     setSecondsRemaining(exercises[0].duration);
   };
 
-  // Handle button clicks
-  const handleStartClick = () => {
-    if (currentExerciseIndex >= exercises.length) {
-      resetWorkout();
-    } else {
-      startTimer();
+  // Skip to next exercise
+  const skipToNext = () => {
+    if (currentExerciseIndex >= exercises.length - 1) return;
+    
+    console.log(`Skipping to exercise ${currentExerciseIndex + 2}`);
+    moveToNextExercise();
+  };
+
+  // Toggle vibration
+  const toggleVibration = () => {
+    setVibrationEnabled(prev => !prev);
+  };
+
+  // Handle exercise item click
+  const handleExerciseItemClick = (index) => {
+    if (!isRunning && index !== currentExerciseIndex) {
+      console.log(`Manually selecting exercise ${index + 1}`);
+      setCurrentExerciseIndex(index);
+      setSecondsRemaining(exercises[index].duration);
     }
   };
 
@@ -148,15 +195,6 @@ function App() {
     }
     return null;
   };
-
-  // Clean up timer on unmount
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, []);
 
   return (
     <div className="container">
@@ -205,7 +243,7 @@ function App() {
         <div className="controls">
           <button 
             className="start-btn" 
-            onClick={handleStartClick}
+            onClick={startWorkout}
             disabled={isRunning}
           >
             {!workoutInProgress 
@@ -216,7 +254,7 @@ function App() {
           </button>
           <button 
             className="pause-btn" 
-            onClick={pauseTimer}
+            onClick={pauseWorkout}
             disabled={!isRunning}
           >
             Pause
@@ -227,6 +265,23 @@ function App() {
           >
             Reset
           </button>
+          {currentExerciseIndex < exercises.length - 1 && workoutInProgress && !isRunning && (
+            <button 
+              className="skip-btn" 
+              onClick={skipToNext}
+            >
+              Skip
+            </button>
+          )}
+        </div>
+        
+        <div className="settings">
+          <button 
+            className={`vibration-btn ${vibrationEnabled ? 'active' : 'inactive'}`}
+            onClick={toggleVibration}
+          >
+            {vibrationEnabled ? 'Vibration: ON' : 'Vibration: OFF'}
+          </button>
         </div>
       </div>
 
@@ -236,6 +291,7 @@ function App() {
           <div 
             key={exercise.id} 
             className={`exercise-item ${index === currentExerciseIndex ? 'current' : ''} ${index < currentExerciseIndex ? 'completed' : ''}`}
+            onClick={() => handleExerciseItemClick(index)}
           >
             <div className="exercise-item-header">
               <span className="exercise-name">{exercise.name}</span>
