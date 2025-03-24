@@ -1,0 +1,228 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #f0f2f5;
+  color: #333;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+h1 {
+  color: #e63946;
+  margin-bottom: 10px;
+}
+
+.workout-container {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.timer-display {
+  font-size: 72px;
+  text-align: center;
+  padding: 30px 0;
+  background-color: #1d3557;
+  color: white;
+}
+
+.exercise-info {
+  padding: 20px;
+  text-align: center;
+}
+
+.exercise-name {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.exercise-description {
+  color: #666;
+  margin-bottom: 15px;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.start-btn {
+  background-color: #e63946;
+  color: white;
+}
+
+.start-btn:hover {
+  background-color: #d62b39;
+}
+
+.pause-btn {
+  background-color: #457b9d;
+  color: white;
+}
+
+.pause-btn:hover {
+  background-color: #3a6a87;
+}
+
+.reset-btn {
+  background-color: #a8dadc;
+  color: #1d3557;
+}
+
+.reset-btn:hover {
+  background-color: #8ecfd2;
+}
+
+.progress-container {
+  margin: 20px 0;
+  padding: 0 20px;
+}
+
+.progress-bar {
+  height: 10px;
+  background-color: #f1faee;
+  border-radius: 5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-fill {
+  position: absolute;
+  height: 100%;
+  width: 0%;
+  background-color: #e63946;
+  border-radius: 5px;
+  transition: width 0.5s;
+}
+
+.workout-list {
+  margin-top: 30px;
+}
+
+.workout-list h2 {
+  margin-bottom: 15px;
+  color: #1d3557;
+}
+
+.exercise-item {
+  background-color: white;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.exercise-item.current {
+  background-color: #a8dadc;
+  border-left: 5px solid #e63946;
+}
+
+.completed .exercise-name {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.exercise-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.exercise-instruction {
+  font-size: 14px;
+  color: #555;
+  font-style: italic;
+}
+
+.next-up {
+  text-align: center;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.next-label {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.next-exercise {
+  font-weight: bold;
+  color: #1d3557;
+}
+
+.footer {
+  margin-top: 30px;
+  padding: 15px 0;
+  text-align: center;
+  border-top: 1px solid #e1e1e1;
+}
+
+.support-link {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  color: #e63946;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.support-link:hover {
+  background-color: #e63946;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 480px) {
+  .timer-display {
+    font-size: 60px;
+    padding: 20px 0;
+  }
+
+  .exercise-name {
+    font-size: 20px;
+  }
+
+  button {
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+}
