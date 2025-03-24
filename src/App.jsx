@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "./components/ui/button";
 import { Progress } from "./components/ui/progress";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./components/ui/card";
-import { Bell, Volume2, VolumeX, Vibrate, ZapOff } from "lucide-react";
+import { Bell, Volume2, VolumeX } from "lucide-react";
 
 function App() {
   // Exercise data
@@ -50,8 +50,11 @@ function App() {
   const [isRunning, setIsRunning] = useState(false);
   const [workoutInProgress, setWorkoutInProgress] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [vibrationEnabled, setVibrationEnabled] = useState(true);
-  
+  // Always enable vibration
+  const vibrationEnabled = true;
+  // Wake Lock state
+  const [wakeLock, setWakeLock] = useState(null);
+
   // Format time (seconds) to MM:SS
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
@@ -146,6 +149,62 @@ function App() {
     };
   }, [isRunning, currentExerciseIndex]); // Only re-run when these change
 
+  // Wake Lock API - Request wake lock when workout starts and release it when it ends
+  useEffect(() => {
+    // Only try to acquire wake lock if workout is in progress
+    if (workoutInProgress && 'wakeLock' in navigator) {
+      const requestWakeLock = async () => {
+        try {
+          const wakeLockObj = await navigator.wakeLock.request('screen');
+          setWakeLock(wakeLockObj);
+          console.log('Wake Lock acquired');
+          
+          // Add release event listener
+          wakeLockObj.addEventListener('release', () => {
+            console.log('Wake Lock released');
+            setWakeLock(null);
+          });
+        } catch (err) {
+          console.error(`Wake Lock error: ${err.name}, ${err.message}`);
+        }
+      };
+      
+      requestWakeLock();
+    }
+    
+    // Release wake lock when workout ends
+    return () => {
+      if (wakeLock) {
+        wakeLock.release()
+          .then(() => console.log('Wake Lock released'))
+          .catch((err) => console.error(`Wake Lock release error: ${err.name}, ${err.message}`));
+      }
+    };
+  }, [workoutInProgress]);
+
+  // Re-acquire wake lock when visibility changes (user switches tabs/apps and returns)
+  useEffect(() => {
+    if (!workoutInProgress) return;
+    
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && !wakeLock && 'wakeLock' in navigator) {
+        try {
+          const wakeLockObj = await navigator.wakeLock.request('screen');
+          setWakeLock(wakeLockObj);
+          console.log('Wake Lock re-acquired after visibility change');
+        } catch (err) {
+          console.error(`Wake Lock error: ${err.name}, ${err.message}`);
+        }
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [workoutInProgress, wakeLock]);
+
   // Start workout
   const startWorkout = () => {
     console.log('Starting workout');
@@ -183,10 +242,10 @@ function App() {
     setSoundEnabled(prev => !prev);
   };
 
-  // Toggle vibration
-  const toggleVibration = () => {
-    setVibrationEnabled(prev => !prev);
-  };
+  // Toggle vibration - no longer used but keeping code for future reference
+  // const toggleVibration = () => {
+  //   setVibrationEnabled(prev => !prev);
+  // };
 
   // Handle exercise item click
   const handleExerciseItemClick = (index) => {
@@ -275,13 +334,6 @@ function App() {
                   >
                     {soundEnabled ? "🔊" : "🔇"}
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={toggleVibration}
-                    className="h-10 px-3"
-                  >
-                    {vibrationEnabled ? "📳" : "📴"}
-                  </Button>
                 </>
               ) : (
                 <>
@@ -297,13 +349,6 @@ function App() {
                     className="h-10 px-3"
                   >
                     {soundEnabled ? "🔊" : "🔇"}
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={toggleVibration}
-                    className="h-10 px-3"
-                  >
-                    {vibrationEnabled ? "📳" : "📴"}
                   </Button>
                 </>
               )}
