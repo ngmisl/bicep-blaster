@@ -1,0 +1,1660 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+<additional_info>
+
+</additional_info>
+
+</file_summary>
+
+<directory_structure>
+public/
+  manifest.json
+  sw.js
+  vite.svg
+src/
+  assets/
+    react.svg
+  components/
+    ui/
+      button.jsx
+      card.jsx
+      progress.jsx
+  lib/
+    utils.js
+  App.css
+  App.jsx
+  index.css
+  main.jsx
+.gitignore
+eslint.config.js
+index.html
+LICENSE
+package.json
+postcss.config.cjs
+README.md
+tailwind.config.cjs
+vite.config.js
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="public/manifest.json">
+{
+  "name": "Bicep Blaster",
+  "short_name": "BicepBlaster",
+  "description": "Bicep workout app with timed exercises",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [
+    {
+      "src": "logo192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
+</file>
+
+<file path="public/sw.js">
+// Service Worker for Bicep Blaster
+const CACHE_NAME = 'bicep-blaster-v1';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/sound.mp3',
+  '/assets/index.css',
+  '/assets/index.js',
+  '/favicon.ico',
+  '/logo.png',
+  '/manifest.json'
+];
+
+// Install event - Cache essential files
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        console.log('Opened cache');
+        return cache.addAll(urlsToCache);
+      })
+  );
+});
+
+// Fetch event - Serve from cache, fallback to network
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        // Cache hit - return the response from cache
+        if (response) {
+          return response;
+        }
+
+        // Clone the request because it's a one-time use stream
+        const fetchRequest = event.request.clone();
+
+        return fetch(fetchRequest)
+          .then((response) => {
+            // Check if we received a valid response
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+
+            // Clone the response because it's a one-time use stream
+            const responseToCache = response.clone();
+
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                // Add the response to cache for future use
+                cache.put(event.request, responseToCache);
+              });
+
+            return response;
+          })
+          .catch(() => {
+            // If both cache and network fail, serve offline page if it's an HTML request
+            if (event.request.headers.get('accept').includes('text/html')) {
+              return caches.match('/index.html');
+            }
+          });
+      })
+  );
+});
+
+// Activate event - Clean up old caches
+self.addEventListener('activate', (event) => {
+  const cacheWhitelist = [CACHE_NAME];
+
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheWhitelist.indexOf(cacheName) === -1) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
+</file>
+
+<file path="public/vite.svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="31.88" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 257"><defs><linearGradient id="IconifyId1813088fe1fbc01fb466" x1="-.828%" x2="57.636%" y1="7.652%" y2="78.411%"><stop offset="0%" stop-color="#41D1FF"></stop><stop offset="100%" stop-color="#BD34FE"></stop></linearGradient><linearGradient id="IconifyId1813088fe1fbc01fb467" x1="43.376%" x2="50.316%" y1="2.242%" y2="89.03%"><stop offset="0%" stop-color="#FFEA83"></stop><stop offset="8.333%" stop-color="#FFDD35"></stop><stop offset="100%" stop-color="#FFA800"></stop></linearGradient></defs><path fill="url(#IconifyId1813088fe1fbc01fb466)" d="M255.153 37.938L134.897 252.976c-2.483 4.44-8.862 4.466-11.382.048L.875 37.958c-2.746-4.814 1.371-10.646 6.827-9.67l120.385 21.517a6.537 6.537 0 0 0 2.322-.004l117.867-21.483c5.438-.991 9.574 4.796 6.877 9.62Z"></path><path fill="url(#IconifyId1813088fe1fbc01fb467)" d="M185.432.063L96.44 17.501a3.268 3.268 0 0 0-2.634 3.014l-5.474 92.456a3.268 3.268 0 0 0 3.997 3.378l24.777-5.718c2.318-.535 4.413 1.507 3.936 3.838l-7.361 36.047c-.495 2.426 1.782 4.5 4.151 3.78l15.304-4.649c2.372-.72 4.652 1.36 4.15 3.788l-11.698 56.621c-.732 3.542 3.979 5.473 5.943 2.437l1.313-2.028l72.516-144.72c1.215-2.423-.88-5.186-3.54-4.672l-25.505 4.922c-2.396.462-4.435-1.77-3.759-4.114l16.646-57.705c.677-2.35-1.37-4.583-3.769-4.113Z"></path></svg>
+</file>
+
+<file path="src/assets/react.svg">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="35.93" height="32" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 228"><path fill="#00D8FF" d="M210.483 73.824a171.49 171.49 0 0 0-8.24-2.597c.465-1.9.893-3.777 1.273-5.621c6.238-30.281 2.16-54.676-11.769-62.708c-13.355-7.7-35.196.329-57.254 19.526a171.23 171.23 0 0 0-6.375 5.848a155.866 155.866 0 0 0-4.241-3.917C100.759 3.829 77.587-4.822 63.673 3.233C50.33 10.957 46.379 33.89 51.995 62.588a170.974 170.974 0 0 0 1.892 8.48c-3.28.932-6.445 1.924-9.474 2.98C17.309 83.498 0 98.307 0 113.668c0 15.865 18.582 31.778 46.812 41.427a145.52 145.52 0 0 0 6.921 2.165a167.467 167.467 0 0 0-2.01 9.138c-5.354 28.2-1.173 50.591 12.134 58.266c13.744 7.926 36.812-.22 59.273-19.855a145.567 145.567 0 0 0 5.342-4.923a168.064 168.064 0 0 0 6.92 6.314c21.758 18.722 43.246 26.282 56.54 18.586c13.731-7.949 18.194-32.003 12.4-61.268a145.016 145.016 0 0 0-1.535-6.842c1.62-.48 3.21-.974 4.76-1.488c29.348-9.723 48.443-25.443 48.443-41.52c0-15.417-17.868-30.326-45.517-39.844Zm-6.365 70.984c-1.4.463-2.836.91-4.3 1.345c-3.24-10.257-7.612-21.163-12.963-32.432c5.106-11 9.31-21.767 12.459-31.957c2.619.758 5.16 1.557 7.61 2.4c23.69 8.156 38.14 20.213 38.14 29.504c0 9.896-15.606 22.743-40.946 31.14Zm-10.514 20.834c2.562 12.94 2.927 24.64 1.23 33.787c-1.524 8.219-4.59 13.698-8.382 15.893c-8.067 4.67-25.32-1.4-43.927-17.412a156.726 156.726 0 0 1-6.437-5.87c7.214-7.889 14.423-17.06 21.459-27.246c12.376-1.098 24.068-2.894 34.671-5.345a134.17 134.17 0 0 1 1.386 6.193ZM87.276 214.515c-7.882 2.783-14.16 2.863-17.955.675c-8.075-4.657-11.432-22.636-6.853-46.752a156.923 156.923 0 0 1 1.869-8.499c10.486 2.32 22.093 3.988 34.498 4.994c7.084 9.967 14.501 19.128 21.976 27.15a134.668 134.668 0 0 1-4.877 4.492c-9.933 8.682-19.886 14.842-28.658 17.94ZM50.35 144.747c-12.483-4.267-22.792-9.812-29.858-15.863c-6.35-5.437-9.555-10.836-9.555-15.216c0-9.322 13.897-21.212 37.076-29.293c2.813-.98 5.757-1.905 8.812-2.773c3.204 10.42 7.406 21.315 12.477 32.332c-5.137 11.18-9.399 22.249-12.634 32.792a134.718 134.718 0 0 1-6.318-1.979Zm12.378-84.26c-4.811-24.587-1.616-43.134 6.425-47.789c8.564-4.958 27.502 2.111 47.463 19.835a144.318 144.318 0 0 1 3.841 3.545c-7.438 7.987-14.787 17.08-21.808 26.988c-12.04 1.116-23.565 2.908-34.161 5.309a160.342 160.342 0 0 1-1.76-7.887Zm110.427 27.268a347.8 347.8 0 0 0-7.785-12.803c8.168 1.033 15.994 2.404 23.343 4.08c-2.206 7.072-4.956 14.465-8.193 22.045a381.151 381.151 0 0 0-7.365-13.322Zm-45.032-43.861c5.044 5.465 10.096 11.566 15.065 18.186a322.04 322.04 0 0 0-30.257-.006c4.974-6.559 10.069-12.652 15.192-18.18ZM82.802 87.83a323.167 323.167 0 0 0-7.227 13.238c-3.184-7.553-5.909-14.98-8.134-22.152c7.304-1.634 15.093-2.97 23.209-3.984a321.524 321.524 0 0 0-7.848 12.897Zm8.081 65.352c-8.385-.936-16.291-2.203-23.593-3.793c2.26-7.3 5.045-14.885 8.298-22.6a321.187 321.187 0 0 0 7.257 13.246c2.594 4.48 5.28 8.868 8.038 13.147Zm37.542 31.03c-5.184-5.592-10.354-11.779-15.403-18.433c4.902.192 9.899.29 14.978.29c5.218 0 10.376-.117 15.453-.343c-4.985 6.774-10.018 12.97-15.028 18.486Zm52.198-57.817c3.422 7.8 6.306 15.345 8.596 22.52c-7.422 1.694-15.436 3.058-23.88 4.071a382.417 382.417 0 0 0 7.859-13.026a347.403 347.403 0 0 0 7.425-13.565Zm-16.898 8.101a358.557 358.557 0 0 1-12.281 19.815a329.4 329.4 0 0 1-23.444.823c-7.967 0-15.716-.248-23.178-.732a310.202 310.202 0 0 1-12.513-19.846h.001a307.41 307.41 0 0 1-10.923-20.627a310.278 310.278 0 0 1 10.89-20.637l-.001.001a307.318 307.318 0 0 1 12.413-19.761c7.613-.576 15.42-.876 23.31-.876H128c7.926 0 15.743.303 23.354.883a329.357 329.357 0 0 1 12.335 19.695a358.489 358.489 0 0 1 11.036 20.54a329.472 329.472 0 0 1-11 20.722Zm22.56-122.124c8.572 4.944 11.906 24.881 6.52 51.026c-.344 1.668-.73 3.367-1.15 5.09c-10.622-2.452-22.155-4.275-34.23-5.408c-7.034-10.017-14.323-19.124-21.64-27.008a160.789 160.789 0 0 1 5.888-5.4c18.9-16.447 36.564-22.941 44.612-18.3ZM128 90.808c12.625 0 22.86 10.235 22.86 22.86s-10.235 22.86-22.86 22.86s-22.86-10.235-22.86-22.86s10.235-22.86 22.86-22.86Z"></path></svg>
+</file>
+
+<file path="src/components/ui/button.jsx">
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cva } from "class-variance-authority"
+
+import { cn } from "../../lib/utils"
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground hover:bg-primary/90",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        xl: "h-14 rounded-md px-8 text-lg",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
+
+const Button = React.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
+  const Comp = asChild ? Slot : "button"
+  return (
+    <Comp
+      className={cn(buttonVariants({ variant, size, className }))}
+      ref={ref}
+      {...props}
+    />
+  )
+})
+Button.displayName = "Button"
+
+export { Button, buttonVariants }
+</file>
+
+<file path="src/components/ui/card.jsx">
+import * as React from "react"
+
+import { cn } from "../../lib/utils"
+
+const Card = React.forwardRef(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("rounded-lg border bg-card text-card-foreground shadow-sm", className)}
+    {...props}
+  />
+))
+Card.displayName = "Card"
+
+const CardHeader = React.forwardRef(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex flex-col space-y-1.5 p-6", className)}
+    {...props}
+  />
+))
+CardHeader.displayName = "CardHeader"
+
+const CardTitle = React.forwardRef(({ className, ...props }, ref) => (
+  <h3
+    ref={ref}
+    className={cn("text-2xl font-semibold leading-none tracking-tight", className)}
+    {...props}
+  />
+))
+CardTitle.displayName = "CardTitle"
+
+const CardDescription = React.forwardRef(({ className, ...props }, ref) => (
+  <p
+    ref={ref}
+    className={cn("text-sm text-muted-foreground", className)}
+    {...props}
+  />
+))
+CardDescription.displayName = "CardDescription"
+
+const CardContent = React.forwardRef(({ className, ...props }, ref) => (
+  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
+))
+CardContent.displayName = "CardContent"
+
+const CardFooter = React.forwardRef(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("flex items-center p-6 pt-0", className)}
+    {...props}
+  />
+))
+CardFooter.displayName = "CardFooter"
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
+</file>
+
+<file path="src/components/ui/progress.jsx">
+import * as React from "react"
+import * as ProgressPrimitive from "@radix-ui/react-progress"
+
+import { cn } from "../../lib/utils"
+
+const Progress = React.forwardRef(({ className, value, ...props }, ref) => (
+  <ProgressPrimitive.Root
+    ref={ref}
+    className={cn(
+      "relative h-4 w-full overflow-hidden rounded-full bg-secondary",
+      className
+    )}
+    {...props}
+  >
+    <ProgressPrimitive.Indicator
+      className="h-full w-full flex-1 bg-primary transition-all"
+      style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
+    />
+  </ProgressPrimitive.Root>
+))
+Progress.displayName = ProgressPrimitive.Root.displayName
+
+export { Progress }
+</file>
+
+<file path="src/lib/utils.js">
+import { clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
+ 
+export function cn(...inputs) {
+  return twMerge(clsx(inputs))
+}
+</file>
+
+<file path="eslint.config.js">
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+
+export default [
+  { ignores: ['dist'] },
+  {
+    files: ['**/*.{js,jsx}'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        ecmaFeatures: { jsx: true },
+        sourceType: 'module',
+      },
+    },
+    plugins: {
+      'react-hooks': reactHooks,
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      ...reactHooks.configs.recommended.rules,
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      'react-refresh/only-export-components': [
+        'warn',
+        { allowConstantExport: true },
+      ],
+    },
+  },
+]
+</file>
+
+<file path="postcss.config.cjs">
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+}
+</file>
+
+<file path="tailwind.config.cjs">
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  darkMode: ["class"],
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    container: {
+      center: true,
+      padding: "2rem",
+      screens: {
+        "2xl": "1400px",
+      },
+    },
+    extend: {
+      colors: {
+        border: "hsl(var(--border) / <alpha-value>)",
+        input: "hsl(var(--input) / <alpha-value>)",
+        ring: "hsl(var(--ring) / <alpha-value>)",
+        background: "hsl(var(--background) / <alpha-value>)",
+        foreground: "hsl(var(--foreground) / <alpha-value>)",
+        primary: {
+          DEFAULT: "hsl(var(--primary) / <alpha-value>)",
+          foreground: "hsl(var(--primary-foreground) / <alpha-value>)",
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary) / <alpha-value>)",
+          foreground: "hsl(var(--secondary-foreground) / <alpha-value>)",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive) / <alpha-value>)",
+          foreground: "hsl(var(--destructive-foreground) / <alpha-value>)",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted) / <alpha-value>)",
+          foreground: "hsl(var(--muted-foreground) / <alpha-value>)",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent) / <alpha-value>)",
+          foreground: "hsl(var(--accent-foreground) / <alpha-value>)",
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover) / <alpha-value>)",
+          foreground: "hsl(var(--popover-foreground) / <alpha-value>)",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card) / <alpha-value>)",
+          foreground: "hsl(var(--card-foreground) / <alpha-value>)",
+        },
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        "accordion-down": {
+          from: { height: 0 },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: 0 },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+      },
+    },
+  },
+  plugins: [require("tailwindcss-animate")],
+}
+</file>
+
+<file path="vite.config.js">
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+})
+</file>
+
+<file path="src/App.css">
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  --primary-color: #e63946;
+  --secondary-color: #457b9d;
+  --dark-color: #1d3557;
+  --light-color: #f1faee;
+  --accent-color: #a8dadc;
+  --text-color: #333;
+  --text-light: #666;
+  --border-radius: 10px;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+body {
+  background-color: #f0f2f5;
+  color: var(--text-color);
+  line-height: 1.6;
+  min-height: 100vh;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+h1 {
+  color: var(--primary-color);
+  margin-bottom: 5px;
+  font-size: 1.8rem;
+}
+
+header p {
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+
+.workout-container {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  flex: 0 0 auto;
+  margin-bottom: 20px;
+}
+
+.timer-display {
+  font-size: 5rem;
+  text-align: center;
+  padding: 20px 0;
+  background-color: var(--dark-color);
+  color: white;
+  font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.timer-display::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--primary-color);
+  opacity: 0.7;
+}
+
+.exercise-info {
+  padding: 20px;
+  text-align: center;
+}
+
+.exercise-name {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: var(--dark-color);
+}
+
+.exercise-description {
+  color: var(--text-light);
+  margin-bottom: 15px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.start-btn {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.start-btn:hover:not(:disabled) {
+  background-color: #d62b39;
+}
+
+.pause-btn {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.pause-btn:hover:not(:disabled) {
+  background-color: #3a6a87;
+}
+
+.reset-btn {
+  background-color: var(--accent-color);
+  color: var(--dark-color);
+}
+
+.reset-btn:hover:not(:disabled) {
+  background-color: #8ecfd2;
+}
+
+.skip-btn {
+  background-color: #ffd166;
+  color: var(--dark-color);
+}
+
+.skip-btn:hover:not(:disabled) {
+  background-color: #ffbd33;
+}
+
+.settings {
+  display: flex;
+  justify-content: center;
+  margin: 0 20px 20px;
+}
+
+.vibration-btn {
+  background-color: #f8f9fa;
+  color: var(--text-light);
+  font-size: 0.85rem;
+  padding: 8px 16px;
+  min-width: auto;
+  border-radius: 30px;
+  transition: all 0.3s ease;
+}
+
+.vibration-btn.active {
+  background-color: #4caf50;
+  color: white;
+}
+
+.vibration-btn.inactive {
+  background-color: #f1f1f1;
+  color: #777;
+}
+
+.vibration-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.progress-container {
+  margin: 15px 0;
+  padding: 0 20px;
+}
+
+.progress-bar {
+  height: 8px;
+  background-color: #f1faee;
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-fill {
+  position: absolute;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(to right, var(--primary-color), #ff8c94);
+  border-radius: 20px;
+  transition: width 0.5s;
+}
+
+.workout-list {
+  margin-top: 15px;
+  flex: 1 0 auto;
+  overflow-y: auto;
+}
+
+.workout-list h2 {
+  margin-bottom: 15px;
+  color: var(--dark-color);
+  font-size: 1.3rem;
+}
+
+.exercise-item {
+  background-color: white;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.exercise-item:active {
+  transform: scale(0.98);
+  background-color: #f9f9f9;
+}
+
+.exercise-item.current {
+  background-color: var(--accent-color);
+  border-left: 5px solid var(--primary-color);
+  transform: translateX(5px);
+}
+
+.exercise-item.current:active {
+  transform: translateX(5px) scale(0.98);
+}
+
+.exercise-item.completed {
+  opacity: 0.7;
+}
+
+.exercise-item.completed .exercise-name {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.exercise-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.exercise-time {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  font-weight: 500;
+  background: var(--light-color);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.exercise-instruction {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.next-up {
+  text-align: center;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: var(--border-radius);
+  margin: 15px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-left: 3px solid var(--secondary-color);
+}
+
+.next-label {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.next-exercise {
+  font-weight: bold;
+  color: var(--dark-color);
+  font-size: 1.1rem;
+}
+
+.footer {
+  margin-top: 20px;
+  padding: 15px 0;
+  text-align: center;
+  border-top: 1px solid #e1e1e1;
+  flex-shrink: 0;
+}
+
+.support-link {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  color: var(--primary-color);
+  text-decoration: none;
+  border-radius: 50px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.support-link:hover {
+  background-color: var(--primary-color);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive styles */
+@media (max-width: 480px) {
+  .container {
+    padding: 10px;
+  }
+  
+  h1 {
+    font-size: 1.5rem;
+  }
+  
+  .timer-display {
+    font-size: 4.5rem;
+    padding: 15px 0;
+  }
+
+  .exercise-name {
+    font-size: 1.3rem;
+  }
+
+  button {
+    padding: 12px 20px;
+    font-size: 0.9rem;
+    min-width: 100px;
+  }
+  
+  .exercise-item {
+    padding: 12px;
+  }
+  
+  .workout-list {
+    margin-top: 10px;
+  }
+  
+  .workout-list h2 {
+    font-size: 1.2rem;
+  }
+}
+
+/* For very small screens */
+@media (max-width: 360px) {
+  .timer-display {
+    font-size: 3.5rem;
+  }
+  
+  .controls {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  button {
+    width: 100%;
+    max-width: 200px;
+  }
+}
+</file>
+
+<file path="src/index.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 24 9.8% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 20 14.3% 4.1%;
+    --foreground: 0 0% 95%;
+    --card: 24 9.8% 10%;
+    --card-foreground: 0 0% 95%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 20.5 90.2% 48.2%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 12 6.5% 15.1%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 142.4 71.8% 29.2%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom Workout App Styles */
+.workout-timer-display {
+  font-size: 7rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+  .workout-timer-display {
+    font-size: 5rem;
+  }
+}
+
+.exercise-name-large {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .exercise-name-large {
+    font-size: 2rem;
+  }
+}
+</file>
+
+<file path="src/main.jsx">
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.jsx'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
+</file>
+
+<file path=".gitignore">
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+</file>
+
+<file path="package.json">
+{
+  "name": "bicep-blaster-react",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.6",
+    "@radix-ui/react-icons": "^1.3.2",
+    "@radix-ui/react-progress": "^1.1.2",
+    "@radix-ui/react-slot": "^1.1.2",
+    "@radix-ui/react-tabs": "^1.1.3",
+    "@shadcn/ui": "^0.0.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.483.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.0.2",
+    "tailwindcss-animate": "1.0.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "10.4.16",
+    "eslint": "^9.21.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^15.15.0",
+    "postcss": "8.4.31",
+    "tailwindcss": "3.3.5",
+    "vite": "^6.2.0"
+  }
+}
+</file>
+
+<file path="index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; media-src 'self' data:; script-src-elem 'self' 'unsafe-inline';">
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#000000" />
+    <title>Bicep Blaster Workout</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Register the service worker for offline support
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch(error => {
+              console.log('ServiceWorker registration failed: ', error);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>
+</file>
+
+<file path="LICENSE">
+This is free and unencumbered software released into the public domain.
+
+Anyone is free to copy, modify, publish, use, compile, sell, or
+distribute this software, either in source code form or as a compiled
+binary, for any purpose, commercial or non-commercial, and by any
+means.
+
+In jurisdictions that recognize copyright laws, the author or authors
+of this software dedicate any and all copyright interest in the
+software to the public domain. We make this dedication for the benefit
+of the public at large and to the detriment of our heirs and
+successors. We intend this dedication to be an overt act of
+relinquishment in perpetuity of all present and future rights to this
+software under copyright law.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+For more information, please refer to <https://unlicense.org>
+</file>
+
+<file path="src/App.jsx">
+import { useState, useEffect } from "react";
+import { Button } from "./components/ui/button";
+import { Progress } from "./components/ui/progress";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./components/ui/card";
+import { Bell, Volume2, VolumeX } from "lucide-react";
+
+function App() {
+  // Exercise data
+  const exercises = [
+    {
+      name: "Wide DB Curl",
+      duration: 60,
+      id: "ex-1",
+      instruction:
+        "Hold dumbbells with palms up and arms wider than shoulder-width, then curl up while keeping elbows fixed.",
+    },
+    {
+      name: "Hammer Curl",
+      duration: 60,
+      id: "ex-2",
+      instruction:
+        "Hold dumbbells with palms facing each other, then curl up while maintaining the neutral grip throughout the movement.",
+    },
+    {
+      name: "Drag Curl",
+      duration: 60,
+      id: "ex-3",
+      instruction:
+        "Curl the weights while keeping them close to your body, dragging them upward as your elbows move backward.",
+    },
+    {
+      name: "Reverse DB Curl",
+      duration: 60,
+      id: "ex-4",
+      instruction:
+        "Hold dumbbells with palms facing down, then curl up while maintaining the overhand grip to target the forearms and brachialis.",
+    },
+    {
+      name: "DB Straight Curl",
+      duration: 60,
+      id: "ex-5",
+      instruction:
+        "Hold dumbbells at your sides with palms facing forward, then curl straight up without letting your elbows move forward.",
+    },
+  ];
+
+  // State
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [secondsRemaining, setSecondsRemaining] = useState(exercises[0].duration);
+  const [isRunning, setIsRunning] = useState(false);
+  const [workoutInProgress, setWorkoutInProgress] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  // Always enable vibration
+  const vibrationEnabled = true;
+  // Wake Lock state
+  const [wakeLock, setWakeLock] = useState(null);
+
+  // Format time (seconds) to MM:SS
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const secs = (seconds % 60).toString().padStart(2, "0");
+    return `${mins}:${secs}`;
+  };
+
+  // Calculate progress percentage
+  const calculateProgress = () => {
+    const totalSeconds = exercises[currentExerciseIndex]?.duration || 1;
+    return ((totalSeconds - secondsRemaining) / totalSeconds) * 100;
+  };
+
+  // Play sound - only when called directly
+  const playSound = () => {
+    if (!workoutInProgress || !soundEnabled) return; // Safety check
+    
+    try {
+      const sound = new Audio('/sound.mp3');
+      sound.play().catch(e => console.log('Error playing sound:', e));
+    } catch (e) {
+      console.log('Error playing sound:', e);
+    }
+  };
+
+  // Vibrate device - only when called directly
+  const vibrate = (pattern) => {
+    if (!workoutInProgress || !vibrationEnabled) return; // Safety check
+    
+    if ('vibrate' in navigator) {
+      try {
+        navigator.vibrate(pattern);
+      } catch (e) {
+        console.log('Vibration failed:', e);
+      }
+    }
+  };
+  
+  // Move to next exercise - called only from one place
+  const moveToNextExercise = () => {
+    const nextIndex = currentExerciseIndex + 1;
+    
+    // Play sound and vibrate
+    playSound();
+    vibrate([300, 100, 300]);
+    
+    if (nextIndex < exercises.length) {
+      // Go to next exercise
+      setCurrentExerciseIndex(nextIndex);
+      setSecondsRemaining(exercises[nextIndex].duration);
+    } else {
+      // Workout complete
+      vibrate([500, 200, 500, 200, 500]);
+      setIsRunning(false);
+      setWorkoutInProgress(false);
+    }
+  };
+  
+  // SINGLE timer useEffect - the only place where time is decremented
+  useEffect(() => {
+    // Only run when the workout is active
+    if (!isRunning) return;
+    
+    console.log(`Timer running for exercise ${currentExerciseIndex + 1}: ${exercises[currentExerciseIndex].name}`);
+    
+    // Create single interval that runs every second
+    const intervalId = setInterval(() => {
+      setSecondsRemaining(seconds => {
+        // When time's up, move to next exercise
+        if (seconds <= 1) {
+          clearInterval(intervalId);
+          
+          console.log(`Exercise ${currentExerciseIndex + 1} complete`);
+          moveToNextExercise();
+          return 0;
+        }
+        
+        // Vibrate during final countdown
+        if (seconds <= 3) {
+          vibrate(200);
+        }
+        
+        // Continue countdown
+        return seconds - 1;
+      });
+    }, 1000);
+    
+    // Clean up when component unmounts or dependencies change
+    return () => {
+      console.log('Clearing timer');
+      clearInterval(intervalId);
+    };
+  }, [isRunning, currentExerciseIndex]); // Only re-run when these change
+
+  // Wake Lock API - Request wake lock when workout starts and release it when it ends
+  useEffect(() => {
+    // Only try to acquire wake lock if workout is in progress
+    if (workoutInProgress && 'wakeLock' in navigator) {
+      const requestWakeLock = async () => {
+        try {
+          const wakeLockObj = await navigator.wakeLock.request('screen');
+          setWakeLock(wakeLockObj);
+          console.log('Wake Lock acquired');
+          
+          // Add release event listener
+          wakeLockObj.addEventListener('release', () => {
+            console.log('Wake Lock released');
+            setWakeLock(null);
+          });
+        } catch (err) {
+          console.error(`Wake Lock error: ${err.name}, ${err.message}`);
+        }
+      };
+      
+      requestWakeLock();
+    }
+    
+    // Release wake lock when workout ends
+    return () => {
+      if (wakeLock) {
+        wakeLock.release()
+          .then(() => console.log('Wake Lock released'))
+          .catch((err) => console.error(`Wake Lock release error: ${err.name}, ${err.message}`));
+      }
+    };
+  }, [workoutInProgress]);
+
+  // Re-acquire wake lock when visibility changes (user switches tabs/apps and returns)
+  useEffect(() => {
+    if (!workoutInProgress) return;
+    
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && !wakeLock && 'wakeLock' in navigator) {
+        try {
+          const wakeLockObj = await navigator.wakeLock.request('screen');
+          setWakeLock(wakeLockObj);
+          console.log('Wake Lock re-acquired after visibility change');
+        } catch (err) {
+          console.error(`Wake Lock error: ${err.name}, ${err.message}`);
+        }
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [workoutInProgress, wakeLock]);
+
+  // Start workout
+  const startWorkout = () => {
+    console.log('Starting workout');
+    setIsRunning(true);
+    if (!workoutInProgress) {
+      setWorkoutInProgress(true);
+    }
+  };
+
+  // Pause workout
+  const pauseWorkout = () => {
+    console.log('Pausing workout');
+    setIsRunning(false);
+  };
+
+  // Reset workout
+  const resetWorkout = () => {
+    console.log('Resetting workout');
+    setIsRunning(false);
+    setWorkoutInProgress(false);
+    setCurrentExerciseIndex(0);
+    setSecondsRemaining(exercises[0].duration);
+  };
+
+  // Skip to next exercise
+  const skipToNext = () => {
+    if (currentExerciseIndex >= exercises.length - 1) return;
+    
+    console.log(`Skipping to exercise ${currentExerciseIndex + 2}`);
+    moveToNextExercise();
+  };
+
+  // Toggle sound
+  const toggleSound = () => {
+    setSoundEnabled(prev => !prev);
+  };
+
+  // Toggle vibration - no longer used but keeping code for future reference
+  // const toggleVibration = () => {
+  //   setVibrationEnabled(prev => !prev);
+  // };
+
+  // Handle exercise item click
+  const handleExerciseItemClick = (index) => {
+    if (!isRunning && index !== currentExerciseIndex) {
+      console.log(`Manually selecting exercise ${index + 1}`);
+      setCurrentExerciseIndex(index);
+      setSecondsRemaining(exercises[index].duration);
+    }
+  };
+
+  // Get next exercise name
+  const getNextExerciseName = () => {
+    if (currentExerciseIndex < exercises.length - 1) {
+      return exercises[currentExerciseIndex + 1].name;
+    }
+    return null;
+  };
+
+  const currentExercise = currentExerciseIndex < exercises.length ? exercises[currentExerciseIndex] : null;
+  const nextExercise = currentExerciseIndex < exercises.length - 1 ? exercises[currentExerciseIndex + 1] : null;
+  const isWorkoutComplete = currentExerciseIndex >= exercises.length;
+
+  return (
+    <div className="dark flex min-h-screen w-full items-center justify-center bg-background px-4 py-6 text-foreground">
+      <div className="w-full max-w-md rounded-lg border border-border shadow-lg">
+        <header className="border-b border-border p-4 text-center">
+          <h1 className="text-2xl font-bold md:text-3xl">Bicep Blaster</h1>
+          <p className="text-sm text-muted-foreground">Complete all exercises in one flow</p>
+        </header>
+
+        {/* Main workout display */}
+        <div className="p-4">
+          {/* Current Exercise Display */}
+          <Card className="mb-6 relative overflow-hidden">
+            <Progress 
+              value={isWorkoutComplete ? 100 : calculateProgress()} 
+              className="absolute top-0 h-1 w-full" 
+            />
+            <CardHeader className="pb-2">
+              <CardTitle className="exercise-name-large">
+                {isWorkoutComplete 
+                  ? "Workout Complete" 
+                  : currentExercise?.name}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 text-center">
+              <div className="workout-timer-display">
+                {isWorkoutComplete 
+                  ? "DONE!" 
+                  : formatTime(secondsRemaining)}
+              </div>
+              <p className="mt-4 text-sm md:text-base">
+                {isWorkoutComplete 
+                  ? "Great job! You've completed all exercises." 
+                  : currentExercise?.instruction}
+              </p>
+              {nextExercise && (
+                <div className="mt-3 text-sm text-muted-foreground">
+                  Next: {nextExercise.name}
+                </div>
+              )}
+            </CardContent>
+            <CardFooter className="justify-center gap-3">
+              {isWorkoutComplete ? (
+                <Button size="lg" onClick={resetWorkout}>
+                  Start Again
+                </Button>
+              ) : !isRunning ? (
+                <>
+                  <Button size="lg" onClick={startWorkout}>
+                    {!workoutInProgress ? "Start" : "Resume"}
+                  </Button>
+                  <Button size="lg" onClick={resetWorkout} variant="outline">
+                    Reset
+                  </Button>
+                  {workoutInProgress && (
+                    <Button size="lg" onClick={skipToNext} variant="outline" 
+                      disabled={currentExerciseIndex >= exercises.length - 1}>
+                      Skip
+                    </Button>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    onClick={toggleSound}
+                    className="h-10 px-3"
+                  >
+                    {soundEnabled ? "🔊" : "🔇"}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button size="lg" onClick={pauseWorkout} variant="outline">
+                    Pause
+                  </Button>
+                  <Button size="lg" onClick={resetWorkout} variant="outline">
+                    Reset
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={toggleSound}
+                    className="h-10 px-3"
+                  >
+                    {soundEnabled ? "🔊" : "🔇"}
+                  </Button>
+                </>
+              )}
+            </CardFooter>
+          </Card>
+
+          {/* Exercise List */}
+          <div className="mb-6">
+            <h2 className="font-bold text-lg mb-2">Exercise List</h2>
+            <div className="space-y-3">
+              {exercises.map((exercise, index) => (
+                <Card 
+                  key={exercise.id}
+                  className={`cursor-pointer ${
+                    index === currentExerciseIndex 
+                      ? "border-primary" 
+                      : index < currentExerciseIndex 
+                        ? "opacity-50" 
+                        : ""
+                  }`}
+                  onClick={() => handleExerciseItemClick(index)}
+                >
+                  <CardContent className="p-3">
+                    <div className="font-bold">{exercise.name}</div>
+                    <div className="text-xs truncate">{exercise.instruction.substring(0, 60)}...</div>
+                    <div className="text-xs mt-1">{formatTime(exercise.duration)}</div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+          
+          {/* Support Link - More Visible */}
+          <div className="mt-4 text-center flex justify-center gap-3">
+            <a 
+              href="https://fourzerofour.fkey.id/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="inline-block py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+            >
+              Support this project ❤️
+            </a>
+            <a 
+              href="https://simplex.chat/contact/#/?v=2-7&smp=smp%3A%2F%2FZKe4uxF4Z_aLJJOEsC-Y6hSkXgQS5-oc442JQGkyP8M%3D%40smp17.simplex.im%2F1CEQbUx7PLENFjgLngWHKRb-hTNQIOKR%23%2F%3Fv%3D1-3%26dh%3DMCowBQYDK2VuAyEAO805q6Syl84pJXUTqmNiPfLPU_Dk_hqyosW56vMy7BU%253D%26srv%3Dogtwfxyi3h2h5weftjjpjmxclhb5ugufa5rcyrmg7j4xlch7qsr5nuqd.onion" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="inline-block py-2 px-4 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
+            >
+              Contact Us 📱
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+</file>
+
+<file path="README.md">
+# Bicep Blaster Workout App
+
+A lightweight, browser-based workout timer application specifically designed for bicep training. This application helps users follow a structured bicep workout routine with timed exercises and visual cues.
+
+![2025-03-24 12 47 46 bicepblaster orbiter website 79f17c054199](https://github.com/user-attachments/assets/b27aa082-efe1-409c-b5c8-43227814af47)
+
+
+
+## Features
+
+- **Structured Workout Plan**: Pre-defined bicep exercises with appropriate durations
+- **Visual Timer**: Large, easy-to-read countdown timer for each exercise
+- **Progress Tracking**: Visual progress bar showing completion status
+- **Exercise Instructions**: Clear instructions for proper form during each exercise
+- **Responsive Design**: Works on desktop and mobile devices
+- **Audio Cues**: Clear "bing" sound notifications when transitioning between exercises
+- **Intuitive Controls**: Simple start, pause, and reset functionality
+- **Browser Integration**: Custom favicon for better browser tab identification
+
+## Recent Updates
+
+- Added a custom favicon for better browser recognition
+- Improved sound notification system with clearer audio cues
+- Enhanced Content Security Policy for better compatibility across browsers
+- Optimized audio file loading for better performance
+
+## Exercises Included
+
+1. **Wide DB Curl**: Hold dumbbells with palms up and arms wider than shoulder-width, then curl up while keeping elbows fixed.
+2. **Hammer Curl**: Hold dumbbells with palms facing each other, then curl up while maintaining the neutral grip throughout the movement.
+3. **Drag Curl**: Curl the weights while keeping them close to your body, dragging them upward as your elbows move backward.
+4. **Reverse DB Curl**: Hold dumbbells with palms facing down, then curl up while maintaining the overhand grip to target the forearms and brachialis.
+5. **DB Straight Curl**: Hold dumbbells at your sides with palms facing forward, then curl straight up without letting your elbows move forward.
+
+## Getting Started
+
+### Prerequisites
+
+- A modern web browser (Chrome, Firefox, Safari, Edge)
+- Dumbbells for performing the exercises
+
+### Installation
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/yourusername/bicepblaster.git
+   ```
+
+2. Navigate to the project directory:
+
+   ```bash
+   cd bicepblaster
+   ```
+
+3. Open `index.html` in your web browser:
+
+   ```bash
+   open index.html   # macOS
+   xdg-open index.html   # Linux
+   start index.html   # Windows
+   ```
+
+Alternatively, you can simply double-click the `index.html` file in your file explorer.
+
+## Usage
+
+1. Review the exercise list to familiarize yourself with the workout routine
+2. Click "Start Workout" to begin the first exercise
+3. Follow the on-screen instructions for each exercise
+4. The timer will automatically progress to the next exercise when the current one is complete
+5. Use the "Pause" button if you need to take a break
+6. Use the "Reset" button to start the workout from the beginning
+
+## Project Structure
+
+- `index.html`: The main HTML structure of the application
+- `styles.css`: All CSS styling for the application
+- `script.js`: JavaScript functionality for the timer and exercise progression
+
+## Customization
+
+To customize the workout routine, modify the `exercises` array in `script.js`. Each exercise object should include:
+
+```javascript
+{
+  name: "Exercise Name",
+  duration: 60, // duration in seconds
+  id: "unique-id",
+  instruction: "Detailed instructions for the exercise"
+}
+```
+
+## Browser Compatibility
+
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the Unlicenced license - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Inspired by high-intensity interval training (HIIT) workout methods
+- Color scheme based on the [American Colonial palette](https://coolors.co/palette/e63946-f1faee-a8dadc-457b9d-1d3557)
+- Audio notification sounds from [Pixabay](https://pixabay.com/)
+
+## Future Enhancements
+
+- User-customizable exercise durations
+- Ability to save and load different workout routines
+- Integration with fitness tracking apps
+- Voice guidance for exercises
+- Dark mode support
+</file>
+
+</files>
