@@ -114,7 +114,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Inspired by high-intensity interval training (HIIT) workout methods
 - Color scheme based on the [American Colonial palette](https://coolors.co/palette/e63946-f1faee-a8dadc-457b9d-1d3557)
-- Audio notification sounds from [Mixkit](https://mixkit.co/)
+- Audio notification sounds from [Pixabay](https://pixabay.com/)
 
 ## Future Enhancements
 
