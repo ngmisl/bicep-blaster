@@ -9,9 +9,10 @@
     "name": "Bicep Blaster",
     "iconUrl": "https://bicepblaster.orbiter.website/logo192.png",
     "homeUrl": "https://bicepblaster.orbiter.website",
-    "imageUrl": "https://bicepblaster.orbiter.website/logo512.png",
+    "imageUrl": "https://bicepblaster.orbiter.website/splash.png",
     "buttonTitle": "Start Workout",
     "splashImageUrl": "https://bicepblaster.orbiter.website/splash.png",
-    "splashBackgroundColor": "#000000"
+    "splashBackgroundColor": "#000000",
+    "webhookUrl": "https://api.neynar.com/f/app/81d07eaa-d906-4be1-9875-08a868918627/event"
     }
 }
