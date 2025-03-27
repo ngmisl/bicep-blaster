@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Wide DB Curl",
+    "duration": 60,
+    "id": "ex-1",
+    "instruction": "Hold dumbbells with palms up and arms wider than shoulder-width, then curl up while keeping elbows fixed."
+  },
+  {
+    "name": "Hammer Curl",
+    "duration": 60,
+    "id": "ex-2",
+    "instruction": "Hold dumbbells with palms facing each other, then curl up while maintaining the neutral grip throughout the movement."
+  },
+  {
+    "name": "Drag Curl",
+    "duration": 60,
+    "id": "ex-3",
+    "instruction": "Curl the weights while keeping them close to your body, dragging them upward as your elbows move backward."
+  },
+  {
+    "name": "Reverse DB Curl",
+    "duration": 60,
+    "id": "ex-4",
+    "instruction": "Hold dumbbells with palms facing down, then curl up while maintaining the overhand grip to target the forearms and brachialis."
+  },
+  {
+    "name": "DB Straight Curl",
+    "duration": 60,
+    "id": "ex-5",
+    "instruction": "Hold dumbbells at your sides with palms facing forward, then curl straight up without letting your elbows move forward."
+  }
+]

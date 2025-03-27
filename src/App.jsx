@@ -1,56 +1,18 @@
-import { useState, useEffect } from "react";
-import { Button } from "./components/ui/button";
-import { Progress } from "./components/ui/progress";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./components/ui/card";
-import { Bell, Volume2, VolumeX } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import sdk from '@farcaster/frame-sdk';
 
 function App() {
-  // Exercise data
-  const exercises = [
-    {
-      name: "Wide DB Curl",
-      duration: 60,
-      id: "ex-1",
-      instruction:
-        "Hold dumbbells with palms up and arms wider than shoulder-width, then curl up while keeping elbows fixed.",
-    },
-    {
-      name: "Hammer Curl",
-      duration: 60,
-      id: "ex-2",
-      instruction:
-        "Hold dumbbells with palms facing each other, then curl up while maintaining the neutral grip throughout the movement.",
-    },
-    {
-      name: "Drag Curl",
-      duration: 60,
-      id: "ex-3",
-      instruction:
-        "Curl the weights while keeping them close to your body, dragging them upward as your elbows move backward.",
-    },
-    {
-      name: "Reverse DB Curl",
-      duration: 60,
-      id: "ex-4",
-      instruction:
-        "Hold dumbbells with palms facing down, then curl up while maintaining the overhand grip to target the forearms and brachialis.",
-    },
-    {
-      name: "DB Straight Curl",
-      duration: 60,
-      id: "ex-5",
-      instruction:
-        "Hold dumbbells at your sides with palms facing forward, then curl straight up without letting your elbows move forward.",
-    },
-  ];
-
+  // Sound reference for preloading
+  const soundRef = useRef(null);
+  
   // State
+  const [exercises, setExercises] = useState([]);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-  const [secondsRemaining, setSecondsRemaining] = useState(exercises[0].duration);
+  const [secondsRemaining, setSecondsRemaining] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [workoutInProgress, setWorkoutInProgress] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   // Always enable vibration
   const vibrationEnabled = true;
   // Wake Lock state
@@ -58,6 +20,79 @@ function App() {
   // Farcaster Frame context
   const [isFrameSDKLoaded, setIsFrameSDKLoaded] = useState(false);
   const [frameContext, setFrameContext] = useState(null);
+
+  // Initialize and preload sound
+  useEffect(() => {
+    // Preload the sound file
+    soundRef.current = new Audio('/sound.mp3');
+    
+    // Function to unlock audio on user interaction
+    const unlockAudio = () => {
+      // Play and immediately pause to unlock audio
+      soundRef.current.volume = 0;
+      soundRef.current.play()
+        .then(() => {
+          soundRef.current.pause();
+          soundRef.current.currentTime = 0;
+          soundRef.current.volume = 1;
+          console.log('Audio unlocked successfully');
+        })
+        .catch(e => {
+          console.log('Error unlocking audio:', e);
+        });
+      
+      // Remove event listeners once audio is unlocked
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+    
+    // Add event listeners to unlock audio on first user interaction
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+      if (soundRef.current) {
+        soundRef.current = null;
+      }
+    };
+  }, []);
+
+  // Load exercises from JSON file
+  useEffect(() => {
+    async function loadExercises() {
+      try {
+        // Add timestamp as cache-busting parameter
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/exercises.json?t=${timestamp}`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch exercises: ${response.status} ${response.statusText}`);
+        }
+        const data = await response.json();
+        setExercises(data);
+        setSecondsRemaining(data[0]?.duration || 60);
+        setIsLoading(false);
+        console.log('Exercises loaded successfully:', data);
+      } catch (error) {
+        console.error('Error loading exercises:', error);
+        // Fallback to default exercises if loading fails
+        setExercises([
+          {
+            name: "Wide DB Curl",
+            duration: 60,
+            id: "ex-1",
+            instruction: "Hold dumbbells with palms up and arms wider than shoulder-width, then curl up while keeping elbows fixed."
+          }
+        ]);
+        setSecondsRemaining(60);
+        setIsLoading(false);
+      }
+    }
+    
+    loadExercises();
+  }, []);
 
   // Format time (seconds) to MM:SS
   const formatTime = (seconds) => {
@@ -77,8 +112,24 @@ function App() {
     if (!workoutInProgress || !soundEnabled) return; // Safety check
     
     try {
-      const sound = new Audio('/sound.mp3');
-      sound.play().catch(e => console.log('Error playing sound:', e));
+      // Try using the preloaded sound first
+      if (soundRef.current) {
+        soundRef.current.currentTime = 0;
+        soundRef.current.play()
+          .then(() => {
+            console.log('Sound played successfully');
+          })
+          .catch(e => {
+            console.log('Error playing preloaded sound:', e);
+            // Fallback to creating a new Audio object
+            const sound = new Audio('/sound.mp3');
+            sound.play().catch(err => console.log('Error playing fallback sound:', err));
+          });
+      } else {
+        // Fallback if reference is not available
+        const sound = new Audio('/sound.mp3');
+        sound.play().catch(e => console.log('Error playing sound:', e));
+      }
     } catch (e) {
       console.log('Error playing sound:', e);
     }
@@ -114,6 +165,8 @@ function App() {
       vibrate([500, 200, 500, 200, 500]);
       setIsRunning(false);
       setWorkoutInProgress(false);
+      // Make sure isWorkoutComplete will be true
+      setCurrentExerciseIndex(exercises.length);
     }
   };
   
@@ -122,7 +175,7 @@ function App() {
     // Only run when the workout is active
     if (!isRunning) return;
     
-    console.log(`Timer running for exercise ${currentExerciseIndex + 1}: ${exercises[currentExerciseIndex].name}`);
+    console.log(`Timer running for exercise ${currentExerciseIndex + 1}: ${exercises[currentExerciseIndex]?.name}`);
     
     // Create single interval that runs every second
     const intervalId = setInterval(() => {
@@ -151,7 +204,7 @@ function App() {
       console.log('Clearing timer');
       clearInterval(intervalId);
     };
-  }, [isRunning, currentExerciseIndex]); // Only re-run when these change
+  }, [isRunning, currentExerciseIndex, exercises]); // Added exercises to dependencies
 
   // Wake Lock API - Request wake lock when workout starts and release it when it ends
   useEffect(() => {
@@ -248,7 +301,7 @@ function App() {
     setIsRunning(false);
     setWorkoutInProgress(false);
     setCurrentExerciseIndex(0);
-    setSecondsRemaining(exercises[0].duration);
+    setSecondsRemaining(exercises[0]?.duration || 60);
   };
 
   // Skip to next exercise
@@ -263,11 +316,6 @@ function App() {
   const toggleSound = () => {
     setSoundEnabled(prev => !prev);
   };
-
-  // Toggle vibration - no longer used but keeping code for future reference
-  // const toggleVibration = () => {
-  //   setVibrationEnabled(prev => !prev);
-  // };
 
   // Handle exercise item click
   const handleExerciseItemClick = (index) => {
@@ -289,13 +337,31 @@ function App() {
   const currentExercise = currentExerciseIndex < exercises.length ? exercises[currentExerciseIndex] : null;
   const nextExercise = currentExerciseIndex < exercises.length - 1 ? exercises[currentExerciseIndex + 1] : null;
   const isWorkoutComplete = currentExerciseIndex >= exercises.length;
+  
+  console.log('Workout state:', { 
+    currentExerciseIndex, 
+    exercisesLength: exercises.length,
+    isWorkoutComplete
+  });
+
+  // Show loading state if exercises are still loading
+  if (isLoading) {
+    return (
+      <div data-theme="ghibli" className="min-h-screen w-full flex items-center justify-center px-4 py-6">
+        <div className="text-center">
+          <div className="loading loading-spinner loading-lg text-primary" />
+          <p className="mt-4">Loading exercises...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="dark flex min-h-screen w-full items-center justify-center bg-background px-4 py-6 text-foreground">
-      <div className="w-full max-w-md rounded-lg border border-border shadow-lg">
-        <header className="border-b border-border p-4 text-center">
-          <h1 className="text-2xl font-bold md:text-3xl">Bicep Blaster</h1>
-          <p className="text-sm text-muted-foreground">Complete all exercises in one flow</p>
+    <div data-theme="ghibli" className="min-h-screen w-full flex items-center justify-center px-4 py-6">
+      <div className="w-full max-w-md ghibli-card overflow-hidden">
+        <header className="ghibli-header p-4 text-center">
+          <h1 className="text-3xl font-bold ghibli-text-shadow">Bicep Blaster</h1>
+          <p className="text-sm opacity-80">Complete all exercises in one flow</p>
           {frameContext && frameContext.fid && (
             <div className="mt-2 text-xs text-primary">
               Connected via Farcaster • FID: {frameContext.fid}
@@ -306,127 +372,143 @@ function App() {
         {/* Main workout display */}
         <div className="p-4">
           {/* Current Exercise Display */}
-          <Card className="mb-6 relative overflow-hidden">
-            <Progress 
+          <div className="card ghibli-card mb-6 relative overflow-hidden">
+            <progress 
+              className="progress progress-primary absolute top-0 w-full h-2" 
               value={isWorkoutComplete ? 100 : calculateProgress()} 
-              className="absolute top-0 h-1 w-full" 
+              max="100"
             />
-            <CardHeader className="pb-2">
-              <CardTitle className="exercise-name-large">
+            <div className="card-body p-4">
+              <h2 className="card-title exercise-name-large justify-center">
                 {isWorkoutComplete 
                   ? "Workout Complete" 
                   : currentExercise?.name}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 text-center">
+              </h2>
               <div className="workout-timer-display">
                 {isWorkoutComplete 
                   ? "DONE!" 
                   : formatTime(secondsRemaining)}
               </div>
-              <p className="mt-4 text-sm md:text-base">
+              <p className="mt-4 text-sm md:text-base text-center">
                 {isWorkoutComplete 
                   ? "Great job! You've completed all exercises." 
                   : currentExercise?.instruction}
               </p>
               {nextExercise && (
-                <div className="mt-3 text-sm text-muted-foreground">
+                <div className="mt-3 text-sm opacity-70 text-center">
                   Next: {nextExercise.name}
                 </div>
               )}
-            </CardContent>
-            <CardFooter className="justify-center gap-3">
-              {isWorkoutComplete ? (
-                <>
-                  <Button size="lg" onClick={resetWorkout}>
-                    Start Again
-                  </Button>
-                  {frameContext && frameContext.fid && (
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      onClick={() => {
-                        try {
-                          // Post to Farcaster about completed workout
-                          sdk.actions.execute({
-                            type: 'share',
-                            title: 'Workout Complete!',
-                            text: `Just completed the Bicep Blaster workout with ${exercises.length} exercises! 💪`,
-                            url: window.location.href
-                          });
-                        } catch (err) {
-                          console.error('Error sharing to Farcaster:', err);
-                        }
-                      }}
+              <div className="card-actions justify-center gap-3 mt-4">
+                {isWorkoutComplete ? (
+                  <>
+                    <button type="button" className="btn btn-primary ghibli-btn" onClick={resetWorkout}>
+                      Start Again
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn btn-accent ghibli-btn ghibli-float" 
+                      onClick={resetWorkout}
                     >
-                      Share 🔄
-                    </Button>
-                  )}
-                </>
-              ) : !isRunning ? (
-                <>
-                  <Button size="lg" onClick={startWorkout}>
-                    {!workoutInProgress ? "Start" : "Resume"}
-                  </Button>
-                  <Button size="lg" onClick={resetWorkout} variant="outline">
-                    Reset
-                  </Button>
-                  {workoutInProgress && (
-                    <Button size="lg" onClick={skipToNext} variant="outline" 
-                      disabled={currentExerciseIndex >= exercises.length - 1}>
-                      Skip
-                    </Button>
-                  )}
-                  <Button 
-                    variant="outline" 
-                    onClick={toggleSound}
-                    className="h-10 px-3"
-                  >
-                    {soundEnabled ? "🔊" : "🔇"}
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button size="lg" onClick={pauseWorkout} variant="outline">
-                    Pause
-                  </Button>
-                  <Button size="lg" onClick={resetWorkout} variant="outline">
-                    Reset
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={toggleSound}
-                    className="h-10 px-3"
-                  >
-                    {soundEnabled ? "🔊" : "🔇"}
-                  </Button>
-                </>
-              )}
-            </CardFooter>
-          </Card>
+                      Restart Workout
+                    </button>
+                    {frameContext && frameContext.fid && (
+                      <button
+                        type="button"
+                        className="btn btn-outline ghibli-btn"
+                        onClick={() => {
+                          try {
+                            // Post to Farcaster about completed workout
+                            sdk.actions.execute({
+                              type: 'share',
+                              title: 'Workout Complete!',
+                              text: `Just completed the Bicep Blaster workout with ${exercises.length} exercises! 💪`,
+                              url: window.location.href
+                            });
+                          } catch (err) {
+                            console.error('Error sharing to Farcaster:', err);
+                          }
+                        }}
+                      >
+                        Share 🔄
+                      </button>
+                    )}
+                  </>
+                ) : !isRunning ? (
+                  <>
+                    <button type="button" className="btn btn-primary ghibli-btn" onClick={startWorkout}>
+                      {!workoutInProgress ? "Start" : "Resume"}
+                    </button>
+                    <button type="button" className="btn btn-outline ghibli-btn" onClick={resetWorkout}>
+                      Reset
+                    </button>
+                    {workoutInProgress && (
+                      <button 
+                        type="button"
+                        className="btn btn-outline ghibli-btn" 
+                        onClick={skipToNext} 
+                        disabled={currentExerciseIndex >= exercises.length - 1}
+                      >
+                        Skip
+                      </button>
+                    )}
+                    <button 
+                      type="button"
+                      className="btn btn-circle btn-sm ghibli-btn" 
+                      onClick={toggleSound}
+                    >
+                      {soundEnabled ? "🔊" : "🔇"}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" className="btn btn-outline ghibli-btn" onClick={pauseWorkout}>
+                      Pause
+                    </button>
+                    <button type="button" className="btn btn-outline ghibli-btn" onClick={resetWorkout}>
+                      Reset
+                    </button>
+                    <button 
+                      type="button"
+                      className="btn btn-circle btn-sm ghibli-btn" 
+                      onClick={toggleSound}
+                    >
+                      {soundEnabled ? "🔊" : "🔇"}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
 
           {/* Exercise List */}
           <div className="mb-6">
-            <h2 className="font-bold text-lg mb-2">Exercise List</h2>
+            <h2 className="font-bold text-lg mb-2 ghibli-text-shadow">Exercise List</h2>
             <div className="space-y-3">
               {exercises.map((exercise, index) => (
-                <Card 
+                <button 
+                  type="button"
                   key={exercise.id}
-                  className={`cursor-pointer ${
+                  className={`card ghibli-card cursor-pointer hover:shadow-ghibli-lg transition-all w-full text-left ${
                     index === currentExerciseIndex 
-                      ? "border-primary" 
+                      ? "border-primary border-2" 
                       : index < currentExerciseIndex 
-                        ? "opacity-50" 
+                        ? "opacity-60" 
                         : ""
                   }`}
                   onClick={() => handleExerciseItemClick(index)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      handleExerciseItemClick(index);
+                    }
+                  }}
                 >
-                  <CardContent className="p-3">
-                    <div className="font-bold">{exercise.name}</div>
-                    <div className="text-xs truncate">{exercise.instruction.substring(0, 60)}...</div>
+                  <div className="card-body p-3">
+                    <h3 className="font-bold">{exercise.name}</h3>
+                    <p className="text-xs truncate">{exercise.instruction.substring(0, 60)}...</p>
                     <div className="text-xs mt-1">{formatTime(exercise.duration)}</div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </button>
               ))}
             </div>
           </div>
@@ -437,7 +519,7 @@ function App() {
               href="https://fourzerofour.fkey.id/" 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="inline-block py-2 px-4 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+              className="btn btn-primary ghibli-btn ghibli-float"
             >
               Support this project ❤️
             </a>
@@ -445,7 +527,7 @@ function App() {
               href="https://simplex.chat/contact/#/?v=2-7&smp=smp%3A%2F%2FZKe4uxF4Z_aLJJOEsC-Y6hSkXgQS5-oc442JQGkyP8M%3D%40smp17.simplex.im%2F1CEQbUx7PLENFjgLngWHKRb-hTNQIOKR%23%2F%3Fv%3D1-3%26dh%3DMCowBQYDK2VuAyEAO805q6Syl84pJXUTqmNiPfLPU_Dk_hqyosW56vMy7BU%253D%26srv%3Dogtwfxyi3h2h5weftjjpjmxclhb5ugufa5rcyrmg7j4xlch7qsr5nuqd.onion" 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="inline-block py-2 px-4 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
+              className="btn btn-secondary ghibli-btn"
             >
               Contact Us 📱
             </a>
@@ -453,7 +535,7 @@ function App() {
           
           {/* Farcaster attribution if in Frame */}
           {frameContext && frameContext.fid && (
-            <div className="mt-4 text-center text-xs text-muted-foreground">
+            <div className="mt-4 text-center text-xs opacity-70">
               <p>Viewed via Farcaster Frame</p>
             </div>
           )}
