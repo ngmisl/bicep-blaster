@@ -1,18 +1,16 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import sdk from '@farcaster/frame-sdk';
 
 function App() {
-  // Sound reference for preloading
-  const soundRef = useRef(null);
-  
   // State
   const [exercises, setExercises] = useState([]);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-  const [secondsRemaining, setSecondsRemaining] = useState(0);
+  const [secondsRemaining, setSecondsRemaining] = useState(60); // Default to 60 seconds
   const [isRunning, setIsRunning] = useState(false);
   const [workoutInProgress, setWorkoutInProgress] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [soundUnlocked, setSoundUnlocked] = useState(false);
   // Always enable vibration
   const vibrationEnabled = true;
   // Wake Lock state
@@ -21,77 +19,127 @@ function App() {
   const [isFrameSDKLoaded, setIsFrameSDKLoaded] = useState(false);
   const [frameContext, setFrameContext] = useState(null);
 
-  // Initialize and preload sound
-  useEffect(() => {
-    // Preload the sound file
-    soundRef.current = new Audio('/sound.mp3');
+  // Play sound - only when called directly - wrapped in useCallback
+  const playSound = useCallback(() => {
+    if (!workoutInProgress || !soundEnabled) return; // Safety check
     
-    // Function to unlock audio on user interaction
-    const unlockAudio = () => {
-      // Play and immediately pause to unlock audio
-      soundRef.current.volume = 0;
-      soundRef.current.play()
-        .then(() => {
-          soundRef.current.pause();
-          soundRef.current.currentTime = 0;
-          soundRef.current.volume = 1;
-          console.log('Audio unlocked successfully');
-        })
-        .catch(e => {
-          console.log('Error unlocking audio:', e);
-        });
+    try {
+      // Create a new Audio object directly (simpler approach)
+      const sound = new Audio('/sound.mp3');
+      sound.volume = 1.0;
       
-      // Remove event listeners once audio is unlocked
-      document.removeEventListener('click', unlockAudio);
-      document.removeEventListener('touchstart', unlockAudio);
-    };
-    
-    // Add event listeners to unlock audio on first user interaction
-    document.addEventListener('click', unlockAudio);
-    document.addEventListener('touchstart', unlockAudio);
-    
-    // Clean up
-    return () => {
-      document.removeEventListener('click', unlockAudio);
-      document.removeEventListener('touchstart', unlockAudio);
-      if (soundRef.current) {
-        soundRef.current = null;
+      // Play with promise handling
+      const playPromise = sound.play();
+      
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log('Sound played successfully');
+          })
+          .catch(e => {
+            console.log('Sound playback failed, using vibration instead:', e);
+            // Always vibrate as a fallback or additional feedback
+            if (vibrationEnabled && 'vibrate' in navigator) {
+              navigator.vibrate([200, 100, 200]);
+            }
+          });
       }
+    } catch (e) {
+      console.log('Error in playSound, using vibration instead:', e);
+      // Fallback to vibration
+      if (vibrationEnabled && 'vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200]);
+      }
+    }
+  }, [workoutInProgress, soundEnabled, vibrationEnabled]);
+
+  // Vibrate device - only when called directly - wrapped in useCallback
+  const vibrate = useCallback((pattern) => {
+    if (!workoutInProgress || !vibrationEnabled) return; // Safety check
+    
+    if ('vibrate' in navigator) {
+      try {
+        navigator.vibrate(pattern);
+      } catch (e) {
+        console.log('Vibration failed:', e);
+      }
+    }
+  }, [workoutInProgress, vibrationEnabled]);
+  
+  // Move to next exercise - called only from one place - wrapped in useCallback
+  const moveToNextExercise = useCallback(() => {
+    const nextIndex = currentExerciseIndex + 1;
+    
+    // Play sound and vibrate for all transitions (not just after the first)
+    playSound();
+    vibrate([300, 100, 300]);
+    
+    if (nextIndex < exercises.length) {
+      // Go to next exercise
+      setCurrentExerciseIndex(nextIndex);
+      setSecondsRemaining(exercises[nextIndex]?.duration || 60);
+    } else {
+      // Workout complete - make sure we properly set the state
+      console.log('Workout complete! Setting final state...');
+      vibrate([500, 200, 500, 200, 500]);
+      setIsRunning(false);
+      setWorkoutInProgress(false);
+      setCurrentExerciseIndex(exercises.length); // Ensure we're past the last exercise
+    }
+  }, [currentExerciseIndex, exercises, playSound, vibrate]);
+
+  // Timer effect - simplified to ensure it starts immediately
+  useEffect(() => {
+    // Only run if workout is in progress
+    if (!isRunning) return;
+    
+    console.log(`Timer running for exercise ${currentExerciseIndex + 1}: ${exercises[currentExerciseIndex]?.name || 'Unknown'}, seconds: ${secondsRemaining}`);
+    
+    // Create a timer that runs every second
+    const timerId = setInterval(() => {
+      setSecondsRemaining(prev => {
+        // When time's up, move to next exercise
+        if (prev <= 1) {
+          clearInterval(timerId);
+          console.log(`Exercise ${currentExerciseIndex + 1} complete`);
+          moveToNextExercise();
+          return 0;
+        }
+        
+        // Vibrate during final countdown
+        if (prev <= 3) {
+          vibrate(200);
+        }
+        
+        // Continue countdown
+        return prev - 1;
+      });
+    }, 1000);
+    
+    // Clean up when component unmounts or dependencies change
+    return () => {
+      console.log('Clearing timer');
+      clearInterval(timerId);
     };
-  }, []);
+  }, [isRunning, currentExerciseIndex, exercises, moveToNextExercise, vibrate, secondsRemaining]);
 
   // Load exercises from JSON file
   useEffect(() => {
-    async function loadExercises() {
-      try {
-        // Add timestamp as cache-busting parameter
-        const timestamp = new Date().getTime();
-        const response = await fetch(`/exercises.json?t=${timestamp}`);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch exercises: ${response.status} ${response.statusText}`);
-        }
-        const data = await response.json();
+    fetch('/exercises.json')
+      .then(response => response.json())
+      .then(data => {
         setExercises(data);
-        setSecondsRemaining(data[0]?.duration || 60);
         setIsLoading(false);
+        // Set initial seconds for the first exercise
+        if (data.length > 0) {
+          setSecondsRemaining(data[0]?.duration || 60);
+        }
         console.log('Exercises loaded successfully:', data);
-      } catch (error) {
+      })
+      .catch(error => {
         console.error('Error loading exercises:', error);
-        // Fallback to default exercises if loading fails
-        setExercises([
-          {
-            name: "Wide DB Curl",
-            duration: 60,
-            id: "ex-1",
-            instruction: "Hold dumbbells with palms up and arms wider than shoulder-width, then curl up while keeping elbows fixed."
-          }
-        ]);
-        setSecondsRemaining(60);
         setIsLoading(false);
-      }
-    }
-    
-    loadExercises();
+      });
   }, []);
 
   // Format time (seconds) to MM:SS
@@ -107,160 +155,56 @@ function App() {
     return ((totalSeconds - secondsRemaining) / totalSeconds) * 100;
   };
 
-  // Play sound - only when called directly
-  const playSound = () => {
-    if (!workoutInProgress || !soundEnabled) return; // Safety check
-    
-    try {
-      // Try using the preloaded sound first
-      if (soundRef.current) {
-        soundRef.current.currentTime = 0;
-        soundRef.current.play()
-          .then(() => {
-            console.log('Sound played successfully');
-          })
-          .catch(e => {
-            console.log('Error playing preloaded sound:', e);
-            // Fallback to creating a new Audio object
-            const sound = new Audio('/sound.mp3');
-            sound.play().catch(err => console.log('Error playing fallback sound:', err));
-          });
-      } else {
-        // Fallback if reference is not available
-        const sound = new Audio('/sound.mp3');
-        sound.play().catch(e => console.log('Error playing sound:', e));
-      }
-    } catch (e) {
-      console.log('Error playing sound:', e);
-    }
-  };
-
-  // Vibrate device - only when called directly
-  const vibrate = (pattern) => {
-    if (!workoutInProgress || !vibrationEnabled) return; // Safety check
-    
-    if ('vibrate' in navigator) {
+  // Request wake lock to keep screen on during workout - wrapped in useCallback
+  const requestWakeLock = useCallback(async () => {
+    // Only proceed if Wake Lock API is supported and we don't already have a wake lock
+    if ('wakeLock' in navigator && !wakeLock) {
       try {
-        navigator.vibrate(pattern);
-      } catch (e) {
-        console.log('Vibration failed:', e);
+        const lock = await navigator.wakeLock.request('screen');
+        setWakeLock(lock);
+        console.log('Wake Lock activated');
+        
+        // Add release listener
+        lock.addEventListener('release', () => {
+          console.log('Wake Lock released');
+          setWakeLock(null);
+        });
+      } catch (err) {
+        // This is expected in some environments like iframes or when permissions are denied
+        console.log('Wake Lock error (this is normal in some environments):', err.name, err.message);
+      }
+    } else if (!('wakeLock' in navigator)) {
+      console.log('Wake Lock API not supported in this browser');
+    }
+  }, [wakeLock]);
+
+  // Release wake lock - wrapped in useCallback
+  const releaseWakeLock = useCallback(async () => {
+    if (wakeLock) {
+      try {
+        await wakeLock.release();
+        setWakeLock(null);
+        console.log('Wake Lock released');
+      } catch (err) {
+        console.error('Error releasing Wake Lock:', err);
       }
     }
-  };
-  
-  // Move to next exercise - called only from one place
-  const moveToNextExercise = () => {
-    const nextIndex = currentExerciseIndex + 1;
-    
-    // Play sound and vibrate
-    playSound();
-    vibrate([300, 100, 300]);
-    
-    if (nextIndex < exercises.length) {
-      // Go to next exercise
-      setCurrentExerciseIndex(nextIndex);
-      setSecondsRemaining(exercises[nextIndex].duration);
-    } else {
-      // Workout complete
-      vibrate([500, 200, 500, 200, 500]);
-      setIsRunning(false);
-      setWorkoutInProgress(false);
-      // Make sure isWorkoutComplete will be true
-      setCurrentExerciseIndex(exercises.length);
-    }
-  };
-  
-  // SINGLE timer useEffect - the only place where time is decremented
-  useEffect(() => {
-    // Only run when the workout is active
-    if (!isRunning) return;
-    
-    console.log(`Timer running for exercise ${currentExerciseIndex + 1}: ${exercises[currentExerciseIndex]?.name}`);
-    
-    // Create single interval that runs every second
-    const intervalId = setInterval(() => {
-      setSecondsRemaining(seconds => {
-        // When time's up, move to next exercise
-        if (seconds <= 1) {
-          clearInterval(intervalId);
-          
-          console.log(`Exercise ${currentExerciseIndex + 1} complete`);
-          moveToNextExercise();
-          return 0;
-        }
-        
-        // Vibrate during final countdown
-        if (seconds <= 3) {
-          vibrate(200);
-        }
-        
-        // Continue countdown
-        return seconds - 1;
-      });
-    }, 1000);
-    
-    // Clean up when component unmounts or dependencies change
-    return () => {
-      console.log('Clearing timer');
-      clearInterval(intervalId);
-    };
-  }, [isRunning, currentExerciseIndex, exercises]); // Added exercises to dependencies
+  }, [wakeLock]);
 
-  // Wake Lock API - Request wake lock when workout starts and release it when it ends
+  // Effect for wake lock management
   useEffect(() => {
     // Only try to acquire wake lock if workout is in progress
     if (workoutInProgress && 'wakeLock' in navigator) {
-      const requestWakeLock = async () => {
-        try {
-          const wakeLockObj = await navigator.wakeLock.request('screen');
-          setWakeLock(wakeLockObj);
-          console.log('Wake Lock acquired');
-          
-          // Add release event listener
-          wakeLockObj.addEventListener('release', () => {
-            console.log('Wake Lock released');
-            setWakeLock(null);
-          });
-        } catch (err) {
-          console.error(`Wake Lock error: ${err.name}, ${err.message}`);
-        }
-      };
-      
       requestWakeLock();
     }
     
-    // Release wake lock when workout ends
+    // Cleanup function
     return () => {
       if (wakeLock) {
-        wakeLock.release()
-          .then(() => console.log('Wake Lock released'))
-          .catch((err) => console.error(`Wake Lock release error: ${err.name}, ${err.message}`));
+        releaseWakeLock();
       }
     };
-  }, [workoutInProgress]);
-
-  // Re-acquire wake lock when visibility changes (user switches tabs/apps and returns)
-  useEffect(() => {
-    if (!workoutInProgress) return;
-    
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState === 'visible' && !wakeLock && 'wakeLock' in navigator) {
-        try {
-          const wakeLockObj = await navigator.wakeLock.request('screen');
-          setWakeLock(wakeLockObj);
-          console.log('Wake Lock re-acquired after visibility change');
-        } catch (err) {
-          console.error(`Wake Lock error: ${err.name}, ${err.message}`);
-        }
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [workoutInProgress, wakeLock]);
+  }, [workoutInProgress, wakeLock, requestWakeLock, releaseWakeLock]);
 
   // Load Farcaster Frame SDK
   useEffect(() => {
@@ -280,13 +224,49 @@ function App() {
     }
   }, [isFrameSDKLoaded, frameContext]);
 
-  // Start workout
+  // Cleanup function for timers and resources
+  useEffect(() => {
+    // Cleanup function that runs on component unmount
+    return () => {
+      // Clear any running timers
+      if (window.workoutTimer) {
+        clearTimeout(window.workoutTimer);
+      }
+      
+      // Release wake lock if active
+      if (wakeLock) {
+        try {
+          wakeLock.release();
+        } catch (err) {
+          console.log('Error releasing Wake Lock during cleanup:', err);
+        }
+      }
+    };
+  }, [wakeLock]);
+
+  // Start workout - completely separated from audio logic
   const startWorkout = () => {
-    console.log('Starting workout');
-    setIsRunning(true);
-    if (!workoutInProgress) {
-      setWorkoutInProgress(true);
+    // Only start if we're not already in a workout
+    if (workoutInProgress) {
+      console.log('Workout already in progress');
+      return;
     }
+    
+    console.log('Starting workout...');
+    
+    // Make sure we have a valid duration for the first exercise
+    if (exercises.length > 0) {
+      const firstExerciseDuration = exercises[0]?.duration || 60;
+      console.log(`Setting initial duration to ${firstExerciseDuration} seconds`);
+      setSecondsRemaining(firstExerciseDuration);
+    }
+    
+    // Start the workout immediately - order matters here!
+    setWorkoutInProgress(true);
+    setIsRunning(true);
+    
+    // Request wake lock to keep screen on
+    requestWakeLock();
   };
 
   // Pause workout
@@ -298,10 +278,25 @@ function App() {
   // Reset workout
   const resetWorkout = () => {
     console.log('Resetting workout');
+    
+    // Clear any running timers first
+    if (window.workoutTimer) {
+      clearTimeout(window.workoutTimer);
+    }
+    
+    // Reset all state in the correct order
     setIsRunning(false);
     setWorkoutInProgress(false);
     setCurrentExerciseIndex(0);
-    setSecondsRemaining(exercises[0]?.duration || 60);
+    
+    // Make sure we have a valid duration for the first exercise
+    if (exercises.length > 0) {
+      setSecondsRemaining(exercises[0]?.duration || 60);
+    } else {
+      setSecondsRemaining(60); // Default fallback
+    }
+    
+    console.log('Workout reset complete');
   };
 
   // Skip to next exercise
@@ -319,10 +314,10 @@ function App() {
 
   // Handle exercise item click
   const handleExerciseItemClick = (index) => {
-    if (!isRunning && index !== currentExerciseIndex) {
-      console.log(`Manually selecting exercise ${index + 1}`);
+    if (workoutInProgress && index !== currentExerciseIndex) {
+      // If workout is in progress, clicking on an exercise will skip to it
       setCurrentExerciseIndex(index);
-      setSecondsRemaining(exercises[index].duration);
+      setSecondsRemaining(exercises[index]?.duration || 60);
     }
   };
 
@@ -404,13 +399,6 @@ function App() {
                   <>
                     <button type="button" className="btn btn-primary ghibli-btn" onClick={resetWorkout}>
                       Start Again
-                    </button>
-                    <button 
-                      type="button" 
-                      className="btn btn-accent ghibli-btn ghibli-float" 
-                      onClick={resetWorkout}
-                    >
-                      Restart Workout
                     </button>
                     {frameContext && frameContext.fid && (
                       <button
@@ -504,9 +492,15 @@ function App() {
                   }}
                 >
                   <div className="card-body p-3">
-                    <h3 className="font-bold">{exercise.name}</h3>
-                    <p className="text-xs truncate">{exercise.instruction.substring(0, 60)}...</p>
-                    <div className="text-xs mt-1">{formatTime(exercise.duration)}</div>
+                    <h3 className="font-bold text-sm md:text-base">
+                      {exercise.name}
+                    </h3>
+                    <p className="text-xs break-words whitespace-normal overflow-hidden line-clamp-2">
+                      {exercise.instruction}
+                    </p>
+                    <div className="text-xs mt-1">
+                      {formatTime(exercise.duration)}
+                    </div>
                   </div>
                 </button>
               ))}
