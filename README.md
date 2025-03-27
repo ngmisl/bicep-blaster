@@ -2,11 +2,9 @@
 
 # Bicep Blaster Workout App
 
-A lightweight, browser-based workout timer application specifically designed for bicep training. This application helps users follow a structured bicep workout routine with timed exercises and visual cues.
+A lightweight, mobile-first workout timer application specifically designed for bicep training. Built with React, Bun, Tailwind CSS, and DaisyUI, this application helps users follow a structured bicep workout routine with timed exercises and visual cues.
 
 ![2025-03-24 12 47 46 bicepblaster orbiter website 79f17c054199](https://github.com/user-attachments/assets/b27aa082-efe1-409c-b5c8-43227814af47)
-
-
 
 ## Features
 
@@ -14,30 +12,75 @@ A lightweight, browser-based workout timer application specifically designed for
 - **Visual Timer**: Large, easy-to-read countdown timer for each exercise
 - **Progress Tracking**: Visual progress bar showing completion status
 - **Exercise Instructions**: Clear instructions for proper form during each exercise
-- **Responsive Design**: Works on desktop and mobile devices
-- **Audio Cues**: Clear "bing" sound notifications when transitioning between exercises
+- **Mobile-First Design**: Optimized for mobile devices with a beautiful Ghibli-inspired UI
+- **Audio Cues**: Sound notifications when transitioning between exercises
+- **Vibration Feedback**: Haptic feedback on mobile devices during transitions
 - **Intuitive Controls**: Simple start, pause, and reset functionality
-- **Browser Integration**: Custom favicon for better browser tab identification
+- **Screen Wake Lock**: Prevents screen from turning off during workouts
+- **Farcaster Integration**: Share your workout completion on Farcaster
 
 ## Recent Updates
 
-- Added a custom favicon for better browser recognition
-- Improved sound notification system with clearer audio cues
-- Enhanced Content Security Policy for better compatibility across browsers
-- Optimized audio file loading for better performance
+- **DaisyUI Integration**: Added DaisyUI for a beautiful Ghibli-inspired UI
+- **JSON-Based Exercise Data**: Moved exercises to a separate JSON file for easier customization
+- **Improved Sound Handling**: Enhanced audio playback for better browser compatibility
+- **Mobile Optimizations**: Improved layout and controls for mobile devices
+- **Wake Lock API**: Added support to keep the screen on during workouts
+- **Restart Button**: Added a dedicated restart button at workout completion
 
-## Exercises Included
+## Tech Stack
 
-1. **Wide DB Curl**: Hold dumbbells with palms up and arms wider than shoulder-width, then curl up while keeping elbows fixed.
-2. **Hammer Curl**: Hold dumbbells with palms facing each other, then curl up while maintaining the neutral grip throughout the movement.
-3. **Drag Curl**: Curl the weights while keeping them close to your body, dragging them upward as your elbows move backward.
-4. **Reverse DB Curl**: Hold dumbbells with palms facing down, then curl up while maintaining the overhand grip to target the forearms and brachialis.
-5. **DB Straight Curl**: Hold dumbbells at your sides with palms facing forward, then curl straight up without letting your elbows move forward.
+- **React**: Frontend framework
+- **Bun**: JavaScript runtime and package manager
+- **Vite**: Build tool and development server
+- **Tailwind CSS**: Utility-first CSS framework
+- **DaisyUI**: Component library for Tailwind CSS
+- **Farcaster Frame SDK**: Integration with Farcaster social platform
+
+## Exercises
+
+Exercises are now stored in a JSON file (`public/exercises.json`) for easy customization:
+
+```json
+[
+  {
+    "name": "Wide DB Curl",
+    "duration": 60,
+    "id": "ex-1",
+    "instruction": "Hold dumbbells with palms up and arms wider than shoulder-width, then curl up while keeping elbows fixed."
+  },
+  {
+    "name": "Hammer Curl",
+    "duration": 60,
+    "id": "ex-2",
+    "instruction": "Hold dumbbells with palms facing each other, then curl up while maintaining the neutral grip throughout the movement."
+  },
+  {
+    "name": "Drag Curl",
+    "duration": 60,
+    "id": "ex-3",
+    "instruction": "Curl the weights while keeping them close to your body, dragging them upward as your elbows move backward."
+  },
+  {
+    "name": "Reverse DB Curl",
+    "duration": 60,
+    "id": "ex-4",
+    "instruction": "Hold dumbbells with palms facing down, then curl up while maintaining the overhand grip to target the forearms and brachialis."
+  },
+  {
+    "name": "DB Straight Curl",
+    "duration": 60,
+    "id": "ex-5",
+    "instruction": "Hold dumbbells at your sides with palms facing forward, then curl straight up without letting your elbows move forward."
+  }
+]
+```
 
 ## Getting Started
 
 ### Prerequisites
 
+- [Bun](https://bun.sh/) (JavaScript runtime and package manager)
 - A modern web browser (Chrome, Firefox, Safari, Edge)
 - Dumbbells for performing the exercises
 
@@ -46,50 +89,47 @@ A lightweight, browser-based workout timer application specifically designed for
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/bicepblaster.git
+   git clone https://github.com/ngmisl/bicep-blaster.git
    ```
 
 2. Navigate to the project directory:
 
    ```bash
-   cd bicepblaster
+   cd bicep-blaster
    ```
 
-3. Open `index.html` in your web browser:
+3. Install dependencies:
 
    ```bash
-   open index.html   # macOS
-   xdg-open index.html   # Linux
-   start index.html   # Windows
+   bun install
    ```
 
-Alternatively, you can simply double-click the `index.html` file in your file explorer.
+4. Start the development server:
 
-## Usage
+   ```bash
+   bun run dev
+   ```
 
-1. Review the exercise list to familiarize yourself with the workout routine
-2. Click "Start Workout" to begin the first exercise
-3. Follow the on-screen instructions for each exercise
-4. The timer will automatically progress to the next exercise when the current one is complete
-5. Use the "Pause" button if you need to take a break
-6. Use the "Reset" button to start the workout from the beginning
+5. Open your browser and navigate to `http://localhost:5173`
 
-## Project Structure
+### Building for Production
 
-- `index.html`: The main HTML structure of the application
-- `styles.css`: All CSS styling for the application
-- `script.js`: JavaScript functionality for the timer and exercise progression
+```bash
+bun run build
+```
 
-## Customization
+The built files will be in the `dist` directory, ready to be deployed to your hosting provider.
 
-To customize the workout routine, modify the `exercises` array in `script.js`. Each exercise object should include:
+## Customizing Exercises
 
-```javascript
+To customize the workout routine, modify the `public/exercises.json` file. Each exercise object should include:
+
+```json
 {
-  name: "Exercise Name",
-  duration: 60, // duration in seconds
-  id: "unique-id",
-  instruction: "Detailed instructions for the exercise"
+  "name": "Exercise Name",
+  "duration": 60,
+  "id": "unique-id",
+  "instruction": "Detailed instructions for the exercise"
 }
 ```
 
@@ -99,6 +139,7 @@ To customize the workout routine, modify the `exercises` array in `script.js`. E
 - Firefox (latest)
 - Safari (latest)
 - Edge (latest)
+- Mobile browsers (iOS Safari, Android Chrome)
 
 ## Contributing
 
@@ -117,8 +158,9 @@ This project is licensed under the Unlicenced license - see the LICENSE file for
 ## Acknowledgments
 
 - Inspired by high-intensity interval training (HIIT) workout methods
-- Color scheme based on the [American Colonial palette](https://coolors.co/palette/e63946-f1faee-a8dadc-457b9d-1d3557)
-- Audio notification sounds from [Pixabay](https://pixabay.com/)
+- UI design inspired by Studio Ghibli animations
+- DaisyUI for the beautiful component library
+- Farcaster for social sharing integration
 
 ## Future Enhancements
 
@@ -126,4 +168,5 @@ This project is licensed under the Unlicenced license - see the LICENSE file for
 - Ability to save and load different workout routines
 - Integration with fitness tracking apps
 - Voice guidance for exercises
-- Dark mode support
+- Offline support with Progressive Web App (PWA) features
+- Workout statistics and history
