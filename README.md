@@ -1,3 +1,5 @@
+[![CodeQL](https://github.com/ngmisl/bicep-blaster/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/ngmisl/bicep-blaster/actions/workflows/github-code-scanning/codeql)
+
 # Bicep Blaster Workout App
 
 A lightweight, browser-based workout timer application specifically designed for bicep training. This application helps users follow a structured bicep workout routine with timed exercises and visual cues.
