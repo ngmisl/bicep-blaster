@@ -4,7 +4,8 @@
 
 A lightweight, mobile-first workout timer application specifically designed for bicep training. Built with React, Bun, Tailwind CSS, and DaisyUI, this application helps users follow a structured bicep workout routine with timed exercises and visual cues.
 
-![2025-03-24 12 47 46 bicepblaster orbiter website 79f17c054199](https://github.com/user-attachments/assets/b27aa082-efe1-409c-b5c8-43227814af47)
+![image](https://github.com/user-attachments/assets/5c032e0a-74c9-4f6b-82e4-d38a7f1a657e)
+
 
 ## Features
 
