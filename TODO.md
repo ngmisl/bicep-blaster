@@ -2,9 +2,9 @@
 
 ## Short Term
 
-- [] Fix resume button?
-- [] Weight Selector
-- [] History
+- [ ] Fix resume button?
+- [ ] Weight Selector
+- [ ] History
 
 ## Core Architecture & Zero-Knowledge Verification
 

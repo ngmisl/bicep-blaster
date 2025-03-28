@@ -51,7 +51,7 @@ function App() {
         navigator.vibrate([200, 100, 200]);
       }
     }
-  }, [workoutInProgress, soundEnabled, vibrationEnabled]);
+  }, [workoutInProgress, soundEnabled]);
 
   // Vibrate device - only when called directly - wrapped in useCallback
   const vibrate = useCallback((pattern) => {
@@ -64,7 +64,7 @@ function App() {
         console.log('Vibration failed:', e);
       }
     }
-  }, [workoutInProgress, vibrationEnabled]);
+  }, [workoutInProgress]);
   
   // Move to next exercise - called only from one place - wrapped in useCallback
   const moveToNextExercise = useCallback(() => {
@@ -357,7 +357,7 @@ function App() {
         <header className="ghibli-header p-4 text-center">
           <h1 className="text-3xl font-bold ghibli-text-shadow">Bicep Blaster</h1>
           <p className="text-sm opacity-80">Complete all exercises in one flow</p>
-          {frameContext && frameContext.fid && (
+          {frameContext?.fid && (
             <div className="mt-2 text-xs text-primary">
               Connected via Farcaster • FID: {frameContext.fid}
             </div>
@@ -400,7 +400,7 @@ function App() {
                     <button type="button" className="btn btn-primary ghibli-btn" onClick={resetWorkout}>
                       Start Again
                     </button>
-                    {frameContext && frameContext.fid && (
+                    {frameContext?.fid && (
                       <button
                         type="button"
                         className="btn btn-outline ghibli-btn"
@@ -528,7 +528,7 @@ function App() {
           </div>
           
           {/* Farcaster attribution if in Frame */}
-          {frameContext && frameContext.fid && (
+          {frameContext?.fid && (
             <div className="mt-4 text-center text-xs opacity-70">
               <p>Viewed via Farcaster Frame</p>
             </div>
