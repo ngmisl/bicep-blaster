@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import sdk from '@farcaster/frame-sdk';
+import { saveWorkoutSession } from "./lib/storage";
 
 function App() {
   // State
@@ -18,6 +19,13 @@ function App() {
   // Farcaster Frame context
   const [isFrameSDKLoaded, setIsFrameSDKLoaded] = useState(false);
   const [frameContext, setFrameContext] = useState(null);
+  // Weight selector state
+  const [weight, setWeight] = useState(10); // Default weight in kg
+  // Repetition tracking
+  const [repetitions, setRepetitions] = useState(1);
+  const [sessionStats, setSessionStats] = useState(null);
+  // Transition flag to prevent multiple timers - critical for exercise progression
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   // Play sound - only when called directly - wrapped in useCallback
   const playSound = useCallback(() => {
@@ -34,10 +42,10 @@ function App() {
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
-            console.log('Sound played successfully');
+            // console.log('Sound played successfully');
           })
           .catch(e => {
-            console.log('Sound playback failed, using vibration instead:', e);
+            // console.log('Sound playback failed, using vibration instead:', e);
             // Always vibrate as a fallback or additional feedback
             if (vibrationEnabled && 'vibrate' in navigator) {
               navigator.vibrate([200, 100, 200]);
@@ -45,7 +53,7 @@ function App() {
           });
       }
     } catch (e) {
-      console.log('Error in playSound, using vibration instead:', e);
+      // console.log('Error in playSound, using vibration instead:', e);
       // Fallback to vibration
       if (vibrationEnabled && 'vibrate' in navigator) {
         navigator.vibrate([200, 100, 200]);
@@ -61,11 +69,11 @@ function App() {
       try {
         navigator.vibrate(pattern);
       } catch (e) {
-        console.log('Vibration failed:', e);
+        // console.log('Vibration failed:', e);
       }
     }
   }, [workoutInProgress]);
-  
+
   // Move to next exercise - called only from one place - wrapped in useCallback
   const moveToNextExercise = useCallback(() => {
     const nextIndex = currentExerciseIndex + 1;
@@ -77,23 +85,56 @@ function App() {
     if (nextIndex < exercises.length) {
       // Go to next exercise
       setCurrentExerciseIndex(nextIndex);
-      setSecondsRemaining(exercises[nextIndex]?.duration || 60);
+      setSecondsRemaining(exercises[nextIndex].duration);
+      
+      // Make sure isRunning stays true
+      setIsRunning(true);
+      
+      // Clear transition flag after a short delay
+      setTimeout(() => {
+        setIsTransitioning(false);
+      }, 500);
     } else {
-      // Workout complete - make sure we properly set the state
-      console.log('Workout complete! Setting final state...');
+      // Workout complete - explicitly set index to length to trigger completion state
+      setCurrentExerciseIndex(exercises.length);
       vibrate([500, 200, 500, 200, 500]);
       setIsRunning(false);
       setWorkoutInProgress(false);
-      setCurrentExerciseIndex(exercises.length); // Ensure we're past the last exercise
+      setIsTransitioning(false);
+      
+      // Calculate and save session stats
+      const totalDuration = exercises.reduce((total, exercise) => total + exercise.duration, 0);
+      const exerciseNames = exercises.map(ex => ex.name);
+      
+      // Create session stats object
+      const stats = {
+        date: new Date().toLocaleDateString(),
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        weight,
+        repetitions,
+        exercises: exerciseNames
+      };
+      
+      // Set current session stats
+      setSessionStats(stats);
+      
+      // Save workout session with selected weight
+      saveWorkoutSession({
+        weight,
+        exercises: exerciseNames,
+        repetitions
+      });
+      
+      // console.log('WORKOUT COMPLETE! Showing completion screen with buttons.');
     }
-  }, [currentExerciseIndex, exercises, playSound, vibrate]);
+  }, [currentExerciseIndex, exercises, playSound, vibrate, weight, repetitions]);
 
   // Timer effect - simplified to ensure it starts immediately
   useEffect(() => {
     // Only run if workout is in progress
     if (!isRunning) return;
     
-    console.log(`Timer running for exercise ${currentExerciseIndex + 1}: ${exercises[currentExerciseIndex]?.name || 'Unknown'}, seconds: ${secondsRemaining}`);
+    // console.log(`Timer running for exercise ${currentExerciseIndex + 1}: ${exercises[currentExerciseIndex]?.name || 'Unknown'}, seconds: ${secondsRemaining}`);
     
     // Create a timer that runs every second
     const timerId = setInterval(() => {
@@ -101,7 +142,7 @@ function App() {
         // When time's up, move to next exercise
         if (prev <= 1) {
           clearInterval(timerId);
-          console.log(`Exercise ${currentExerciseIndex + 1} complete`);
+          // console.log(`Exercise ${currentExerciseIndex + 1} complete`);
           moveToNextExercise();
           return 0;
         }
@@ -118,7 +159,7 @@ function App() {
     
     // Clean up when component unmounts or dependencies change
     return () => {
-      console.log('Clearing timer');
+      // console.log('Clearing timer');
       clearInterval(timerId);
     };
   }, [isRunning, currentExerciseIndex, exercises, moveToNextExercise, vibrate, secondsRemaining]);
@@ -134,10 +175,10 @@ function App() {
         if (data.length > 0) {
           setSecondsRemaining(data[0]?.duration || 60);
         }
-        console.log('Exercises loaded successfully:', data);
+        // console.log('Exercises loaded successfully:', data);
       })
       .catch(error => {
-        console.error('Error loading exercises:', error);
+        // console.error('Error loading exercises:', error);
         setIsLoading(false);
       });
   }, []);
@@ -162,19 +203,19 @@ function App() {
       try {
         const lock = await navigator.wakeLock.request('screen');
         setWakeLock(lock);
-        console.log('Wake Lock activated');
+        // console.log('Wake Lock activated');
         
         // Add release listener
         lock.addEventListener('release', () => {
-          console.log('Wake Lock released');
+          // console.log('Wake Lock released');
           setWakeLock(null);
         });
       } catch (err) {
         // This is expected in some environments like iframes or when permissions are denied
-        console.log('Wake Lock error (this is normal in some environments):', err.name, err.message);
+        // console.log('Wake Lock error (this is normal in some environments):', err.name, err.message);
       }
     } else if (!('wakeLock' in navigator)) {
-      console.log('Wake Lock API not supported in this browser');
+      // console.log('Wake Lock API not supported in this browser');
     }
   }, [wakeLock]);
 
@@ -184,9 +225,9 @@ function App() {
       try {
         await wakeLock.release();
         setWakeLock(null);
-        console.log('Wake Lock released');
+        // console.log('Wake Lock released');
       } catch (err) {
-        console.error('Error releasing Wake Lock:', err);
+        // console.error('Error releasing Wake Lock:', err);
       }
     }
   }, [wakeLock]);
@@ -213,9 +254,9 @@ function App() {
         setFrameContext(await sdk.context);
         sdk.actions.ready();
         setIsFrameSDKLoaded(true);
-        console.log('Frame SDK loaded:', frameContext);
+        // console.log('Frame SDK loaded:', frameContext);
       } catch (err) {
-        console.error('Error loading Frame SDK:', err);
+        // console.error('Error loading Frame SDK:', err);
       }
     };
     
@@ -238,7 +279,7 @@ function App() {
         try {
           wakeLock.release();
         } catch (err) {
-          console.log('Error releasing Wake Lock during cleanup:', err);
+          // console.log('Error releasing Wake Lock during cleanup:', err);
         }
       }
     };
@@ -246,18 +287,21 @@ function App() {
 
   // Start workout - completely separated from audio logic
   const startWorkout = () => {
-    // Only start if we're not already in a workout
+    // console.log('Starting or resuming workout...');
+    
     if (workoutInProgress) {
-      console.log('Workout already in progress');
+      // This is a resume action
+      // console.log('Resuming paused workout');
+      setIsRunning(true);
       return;
     }
     
-    console.log('Starting workout...');
+    // console.log('Starting new workout...');
     
     // Make sure we have a valid duration for the first exercise
     if (exercises.length > 0) {
       const firstExerciseDuration = exercises[0]?.duration || 60;
-      console.log(`Setting initial duration to ${firstExerciseDuration} seconds`);
+      // console.log(`Setting initial duration to ${firstExerciseDuration} seconds`);
       setSecondsRemaining(firstExerciseDuration);
     }
     
@@ -271,39 +315,40 @@ function App() {
 
   // Pause workout
   const pauseWorkout = () => {
-    console.log('Pausing workout');
+    // console.log('Pausing workout');
     setIsRunning(false);
   };
 
-  // Reset workout
+  // Reset workout to beginning
   const resetWorkout = () => {
-    console.log('Resetting workout');
+    // console.log('Resetting workout for a new repetition');
     
-    // Clear any running timers first
-    if (window.workoutTimer) {
-      clearTimeout(window.workoutTimer);
-    }
-    
-    // Reset all state in the correct order
-    setIsRunning(false);
-    setWorkoutInProgress(false);
+    // Important! Reset exercise index to 0 first
     setCurrentExerciseIndex(0);
     
-    // Make sure we have a valid duration for the first exercise
+    // Make sure we have the correct duration for the first exercise
     if (exercises.length > 0) {
-      setSecondsRemaining(exercises[0]?.duration || 60);
+      const firstExerciseDuration = exercises[0]?.duration || 60;
+      setSecondsRemaining(firstExerciseDuration);
+      // console.log(`Reset duration to ${firstExerciseDuration} seconds for first exercise`);
     } else {
-      setSecondsRemaining(60); // Default fallback
+      setSecondsRemaining(60);
     }
     
-    console.log('Workout reset complete');
+    // Reset workout state flags
+    setIsRunning(false);
+    setWorkoutInProgress(false);
+    setIsTransitioning(false);
+    
+    // Don't reset the sessionStats here to keep them visible
+    // The repetition count is incremented separately when "Another Repetition" is clicked
   };
 
   // Skip to next exercise
   const skipToNext = () => {
     if (currentExerciseIndex >= exercises.length - 1) return;
     
-    console.log(`Skipping to exercise ${currentExerciseIndex + 2}`);
+    // console.log(`Skipping to exercise ${currentExerciseIndex + 2}`);
     moveToNextExercise();
   };
 
@@ -321,23 +366,176 @@ function App() {
     }
   };
 
-  // Get next exercise name
-  const getNextExerciseName = () => {
+  // Helper to check if workout is complete
+  const isWorkoutComplete = currentExerciseIndex >= exercises.length;
+
+  useEffect(() => {
+    // Debug workout completion state
+    if (isWorkoutComplete) {
+      // console.log('Workout is marked as COMPLETE - buttons should be visible now');
+    }
+  }, [isWorkoutComplete]);
+
+  // Current exercise - safely access it to prevent errors
+  const currentExercise = exercises[currentExerciseIndex];
+  
+  // Get next exercise name helper
+  const getNextExerciseName = useCallback(() => {
     if (currentExerciseIndex < exercises.length - 1) {
-      return exercises[currentExerciseIndex + 1].name;
+      return exercises[currentExerciseIndex + 1]?.name;
     }
     return null;
-  };
+  }, [currentExerciseIndex, exercises]);
 
-  const currentExercise = currentExerciseIndex < exercises.length ? exercises[currentExerciseIndex] : null;
-  const nextExercise = currentExerciseIndex < exercises.length - 1 ? exercises[currentExerciseIndex + 1] : null;
-  const isWorkoutComplete = currentExerciseIndex >= exercises.length;
+  const nextExercise = getNextExerciseName();
   
-  console.log('Workout state:', { 
-    currentExerciseIndex, 
-    exercisesLength: exercises.length,
-    isWorkoutComplete
-  });
+  // console.log('Workout state:', { 
+  //   currentExerciseIndex, 
+  //   exercisesLength: exercises.length,
+  //   isWorkoutComplete
+  // });
+
+  const generateAndDownloadCard = () => {
+    // console.log('Generating download card with stats:', sessionStats);
+    
+    if (!sessionStats) {
+      // console.error('No session stats available');
+      return;
+    }
+    
+    // Create a new SVG element
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '800');
+    svg.setAttribute('height', '400');
+    svg.setAttribute('viewBox', '0 0 800 400');
+    
+    // Add background with gradient
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+    gradient.setAttribute('id', 'bg-gradient');
+    gradient.setAttribute('x1', '0%');
+    gradient.setAttribute('y1', '0%');
+    gradient.setAttribute('x2', '100%');
+    gradient.setAttribute('y2', '100%');
+    
+    const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+    stop1.setAttribute('offset', '0%');
+    stop1.setAttribute('stop-color', '#4158D0');
+    
+    const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+    stop2.setAttribute('offset', '46%');
+    stop2.setAttribute('stop-color', '#C850C0');
+    
+    const stop3 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+    stop3.setAttribute('offset', '100%');
+    stop3.setAttribute('stop-color', '#FFCC70');
+    
+    gradient.appendChild(stop1);
+    gradient.appendChild(stop2);
+    gradient.appendChild(stop3);
+    defs.appendChild(gradient);
+    svg.appendChild(defs);
+    
+    // Add background rectangle with rounded corners
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', '0');
+    rect.setAttribute('y', '0');
+    rect.setAttribute('rx', '20');
+    rect.setAttribute('ry', '20');
+    rect.setAttribute('width', '800');
+    rect.setAttribute('height', '400');
+    rect.setAttribute('fill', 'url(#bg-gradient)');
+    svg.appendChild(rect);
+    
+    // Add title
+    const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    title.setAttribute('x', '400');
+    title.setAttribute('y', '60');
+    title.setAttribute('text-anchor', 'middle');
+    title.setAttribute('font-size', '36');
+    title.setAttribute('font-weight', 'bold');
+    title.setAttribute('font-family', 'Arial, sans-serif');
+    title.setAttribute('fill', 'white');
+    title.textContent = 'Bicep Blaster';
+    svg.appendChild(title);
+    
+    // Format date nicely for display
+    const dateStr = sessionStats.date && sessionStats.time 
+      ? `${sessionStats.date} - ${sessionStats.time}`
+      : new Date().toLocaleString();
+    
+    // Add workout info
+    const dateText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    dateText.setAttribute('x', '400');
+    dateText.setAttribute('y', '120');
+    dateText.setAttribute('text-anchor', 'middle');
+    dateText.setAttribute('font-size', '24');
+    dateText.setAttribute('font-family', 'Arial, sans-serif');
+    dateText.setAttribute('fill', 'white');
+    dateText.textContent = `Date: ${dateStr}`;
+    svg.appendChild(dateText);
+    
+    const weightText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    weightText.setAttribute('x', '400');
+    weightText.setAttribute('y', '180');  
+    weightText.setAttribute('text-anchor', 'middle');
+    weightText.setAttribute('font-size', '24');
+    weightText.setAttribute('font-family', 'Arial, sans-serif');
+    weightText.setAttribute('fill', 'white');
+    weightText.textContent = `Weight: ${sessionStats.weight} kg`;
+    svg.appendChild(weightText);
+    
+    const repsText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    repsText.setAttribute('x', '400');
+    repsText.setAttribute('y', '240');  
+    repsText.setAttribute('text-anchor', 'middle');
+    repsText.setAttribute('font-size', '24');
+    repsText.setAttribute('font-family', 'Arial, sans-serif');
+    repsText.setAttribute('fill', 'white');
+    repsText.textContent = `Repetitions: ${sessionStats.repetitions}`;
+    svg.appendChild(repsText);
+    
+    // Add website URL
+    const urlText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    urlText.setAttribute('x', '400');
+    urlText.setAttribute('y', '320');  
+    urlText.setAttribute('text-anchor', 'middle');
+    urlText.setAttribute('font-size', '18');
+    urlText.setAttribute('font-family', 'Arial, sans-serif');
+    urlText.setAttribute('fill', 'white');
+    urlText.textContent = 'bicepblaster.orbiter.website';
+    svg.appendChild(urlText);
+    
+    // Add dumbbell icon
+    const dumbbellPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    dumbbellPath.setAttribute('d', 'M6,5 H10 V7 H14 V5 H18 V9 H14 V7 H10 V9 H6 Z');
+    dumbbellPath.setAttribute('transform', 'translate(660, 50) scale(2)');
+    dumbbellPath.setAttribute('fill', 'white');
+    dumbbellPath.setAttribute('stroke', 'white');
+    dumbbellPath.setAttribute('stroke-width', '1');
+    svg.appendChild(dumbbellPath);
+    
+    // Convert SVG to a string
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(svg);
+    
+    // Create a Blob with the SVG string
+    const blob = new Blob([svgString], {type: 'image/svg+xml'});
+    const url = URL.createObjectURL(blob);
+    
+    // Create a download link and trigger it
+    const downloadLink = document.createElement('a');
+    downloadLink.href = url;
+    downloadLink.download = `bicep-blaster-${new Date().toISOString().slice(0,10)}.svg`;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    
+    // Clean up the blob URL
+    setTimeout(() => URL.revokeObjectURL(url), 100);
+    
+    // console.log('Workout card download initiated!');
+  };
 
   // Show loading state if exercises are still loading
   if (isLoading) {
@@ -366,6 +564,71 @@ function App() {
 
         {/* Main workout display */}
         <div className="p-4">
+          {/* Weight selector - Only show before workout starts AND only on first repetition */}
+          {!workoutInProgress && !isWorkoutComplete && repetitions === 1 && (
+            <div className="card ghibli-card mb-6">
+              <div className="card-body p-4">
+                <h2 className="card-title justify-center font-bold text-lg mb-2 ghibli-text-shadow">Weight Selection</h2>
+                <div className="flex items-center justify-center my-3">
+                  <button 
+                    type="button"
+                    className="btn btn-circle btn-primary ghibli-btn text-xl font-bold"
+                    onClick={() => setWeight(prev => Math.max(1, prev - 1))}
+                    aria-label="Decrease weight"
+                  >
+                    -
+                  </button>
+                  <div className="mx-4 text-2xl font-bold flex items-baseline">
+                    <span>{weight}</span>
+                    <span className="text-xl ml-2">kg</span>
+                  </div>
+                  <button 
+                    type="button"
+                    className="btn btn-circle btn-primary ghibli-btn text-xl font-bold"
+                    onClick={() => setWeight(prev => prev + 1)}
+                    aria-label="Increase weight"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Workout Completion Screen - Show when workout is complete */}
+          {isWorkoutComplete && sessionStats && (
+            <div className="card ghibli-card mb-6">
+              <div className="card-body p-4">
+                <h2 className="card-title justify-center font-bold text-lg mb-2 ghibli-text-shadow">Workout Stats</h2>
+                <div className="my-4 grid grid-cols-2 gap-2 text-sm">
+                  <div className="opacity-70">Date:</div>
+                  <div className="text-right">{sessionStats.date}</div>
+                  <div className="opacity-70">Weight:</div>
+                  <div className="text-right">{sessionStats.weight} kg</div>
+                  <div className="opacity-70">Repetitions:</div>
+                  <div className="text-right">{sessionStats.repetitions}</div>
+                </div>
+                <div className="card-actions justify-center gap-3 mt-4">
+                  <button 
+                    type="button" 
+                    className="btn btn-primary ghibli-btn" 
+                    onClick={() => {
+                      setRepetitions(repetitions + 1);
+                      resetWorkout();
+                    }}
+                  >
+                    Another Repetition
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-accent ghibli-btn" 
+                    onClick={generateAndDownloadCard}
+                  >
+                    Download Card
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Current Exercise Display */}
           <div className="card ghibli-card mb-6 relative overflow-hidden">
             <progress 
@@ -391,37 +654,12 @@ function App() {
               </p>
               {nextExercise && (
                 <div className="mt-3 text-sm opacity-70 text-center">
-                  Next: {nextExercise.name}
+                  Next: {nextExercise}
                 </div>
               )}
               <div className="card-actions justify-center gap-3 mt-4">
                 {isWorkoutComplete ? (
-                  <>
-                    <button type="button" className="btn btn-primary ghibli-btn" onClick={resetWorkout}>
-                      Start Again
-                    </button>
-                    {frameContext?.fid && (
-                      <button
-                        type="button"
-                        className="btn btn-outline ghibli-btn"
-                        onClick={() => {
-                          try {
-                            // Post to Farcaster about completed workout
-                            sdk.actions.execute({
-                              type: 'share',
-                              title: 'Workout Complete!',
-                              text: `Just completed the Bicep Blaster workout with ${exercises.length} exercises! 💪`,
-                              url: window.location.href
-                            });
-                          } catch (err) {
-                            console.error('Error sharing to Farcaster:', err);
-                          }
-                        }}
-                      >
-                        Share 🔄
-                      </button>
-                    )}
-                  </>
+                  <></>
                 ) : !isRunning ? (
                   <>
                     <button type="button" className="btn btn-primary ghibli-btn" onClick={startWorkout}>
@@ -468,6 +706,29 @@ function App() {
               </div>
             </div>
           </div>
+
+          {/* Workout Stats */}
+          {sessionStats && (
+            <div className="card ghibli-card mb-6">
+              <div className="card-body p-4">
+                <h2 className="card-title justify-center font-bold text-lg mb-2 ghibli-text-shadow">Workout Stats</h2>
+                <div className="flex flex-col gap-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm opacity-70">Date:</span>
+                    <span className="text-sm">{sessionStats.date}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm opacity-70">Weight:</span>
+                    <span className="text-sm">{sessionStats.weight} kg</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm opacity-70">Repetitions:</span>
+                    <span className="text-sm">{sessionStats.repetitions}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Exercise List */}
           <div className="mb-6">
